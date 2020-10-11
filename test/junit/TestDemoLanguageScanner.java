@@ -63,4 +63,9 @@ public class TestDemoLanguageScanner {
     public void testSimpleArithmetic() {
         runScannerTestCase("SimpleArithmetic");
     }
+
+    @Test
+    public void testSimpleClass() {
+        runScannerTestCase("SimpleClass");
+    }
 }
