@@ -94,6 +94,8 @@ import Parser.sym;
      ComplexSymbol cs = (ComplexSymbol)s; 
      if (cs.sym == sym.IDENTIFIER) {
        return "ID(" + (String)cs.value + ")";
+     } else if (cs.sym == sym.DIGIT) {
+       return "DIGIT(" + (String)cs.value + ")";
      } else if (cs.sym == sym.error) {
        return "<UNEXPECTED(" + (String)cs.value + ")>";
      } else {
@@ -115,20 +117,60 @@ white = {eol}|[ \t]
 /* reserved words (first so that they take precedence over identifiers) */
 "display" { return symbol(sym.DISPLAY); }
 
+"class" { return symbol(sym.CLASS); }
+"public" { return symbol(sym.PUBLIC); }
+"static" { return symbol(sym.STATIC); }
+"void" { return symbol(sym.VOID); }
+"main" { return symbol(sym.MAIN); }
+"String" { return symbol(sym.STRING); }
+"extends" { return symbol(sym.EXTENDS); }
+"this" { return symbol(sym.THIS); }
+"new" { return symbol(sym.NEW); }
+"if" { return symbol(sym.IF); }
+"else" { return symbol(sym.ELSE); }
+"while" { return symbol(sym.WHILE); }
+
+"boolean" { return symbol(sym.BOOLEAN); }
+"int" { return symbol(sym.INT); }
+
+"System.out.println" { return symbol(sym.PRINTLN); }
+"length" { return symbol(sym.LENGTH); }
+
 /* operators */
 "+" { return symbol(sym.PLUS); }
 "=" { return symbol(sym.BECOMES); }
+
+"&&" { return symbol(sym.AND); }
+"<" { return symbol(sym.LESS); }
+"-" { return symbol(sym.MINUS); }
+"*" { return symbol(sym.TIMES); }
+"." { return symbol(sym.DOT); }
+"!" { return symbol(sym.NOT); }
 
 /* delimiters */
 "(" { return symbol(sym.LPAREN); }
 ")" { return symbol(sym.RPAREN); }
 ";" { return symbol(sym.SEMICOLON); }
 
+"{" { return symbol(sym.LBRACKET); }
+"}" { return symbol(sym.RBRACKET); }
+"[" { return symbol(sym.LBRACKET_SQUARE); }
+"]" { return symbol(sym.RBRACKET_SQUARE); }
+"," { return symbol(sym.COMMA); }
+
+/* boolean values */
+"true" { return symbol(sym.TRUE); }
+"false" { return symbol(sym.FALSE); }
+
 /* identifiers */
 {letter} ({letter}|{digit}|_)* {
   return symbol(sym.IDENTIFIER, yytext());
 }
 
+/* digits */
+{digit}+ {
+  return symbol(sym.DIGIT, yytext());
+}
 
 /* whitespace */
 {white}+ { /* ignore whitespace */ }
