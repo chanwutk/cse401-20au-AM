@@ -28,3 +28,8 @@ out/
 
 # Dump files:
 *.hprof
+
+# Compiled JAVA
+src/Parser/parser.java
+src/Parser/sym.java
+src/Scanner/scanner.java
