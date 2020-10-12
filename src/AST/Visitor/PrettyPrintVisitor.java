@@ -7,13 +7,6 @@ import AST.*;
 
 public class PrettyPrintVisitor implements Visitor {
 
-  // Display added for toy example language.  Not used in regular MiniJava
-  public void visit(Display n) {
-    System.out.print("display ");
-    n.e.accept(this);
-    System.out.print(";");
-  }
-  
   // MainClass m;
   // ClassDeclList cl;
   public void visit(Program n) {
@@ -23,7 +16,7 @@ public class PrettyPrintVisitor implements Visitor {
         n.cl.get(i).accept(this);
     }
   }
-  
+
   // Identifier i1,i2;
   // Statement s;
   public void visit(MainClass n) {
@@ -58,7 +51,7 @@ public class PrettyPrintVisitor implements Visitor {
     System.out.println();
     System.out.println("}");
   }
- 
+
   // Identifier i;
   // Identifier j;
   // VarDeclList vl;
@@ -188,7 +181,7 @@ public class PrettyPrintVisitor implements Visitor {
     n.e.accept(this);
     System.out.print(");");
   }
-  
+
   // Identifier i;
   // Exp e;
   public void visit(Assign n) {

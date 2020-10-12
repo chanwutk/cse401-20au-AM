@@ -19,9 +19,8 @@ will need changes and additions, and some things will need to be
 deleted, to update the files for the actual minijava project.)
 
 The AST classes provided are closely based on those on the MiniJava
-website, slightly modified to add tracking of line numbers, as well as
-adding a separate Display node only used in the toy language, but not
-for MiniJava.  The AST classes have also been updated to use Lists with
+website, slightly modified to add tracking of line numbers.
+The AST classes have also been updated to use Lists with
 type parameters instead of the original Vector class used in the code on
 the MiniJava website.
 
