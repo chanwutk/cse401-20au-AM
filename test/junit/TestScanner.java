@@ -11,56 +11,63 @@ import java.nio.charset.Charset;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(Parameterized.class)
 public class TestScanner {
     public static final String TEST_FILES_LOCATION = "test/resources/Scanner/";
     public static final String TEST_FILES_INPUT_EXTENSION = ".java";
     public static final String TEST_FILES_EXPECTED_EXTENSION = ".expected";
 
-    /*
-     * You may be able to reuse this private helper method for your own testing of
-     * the MiniJava scanner.
-     */
-    private void runScannerTestCase(String testCaseName) {
-        try {
-            FileInputStream input = new FileInputStream(
-                    TEST_FILES_LOCATION + testCaseName + TEST_FILES_INPUT_EXTENSION);
-            String[] expected = new String(
-                    Files.readAllBytes(Paths.get(TEST_FILES_LOCATION, testCaseName + TEST_FILES_EXPECTED_EXTENSION)),
-                    Charset.defaultCharset()).split(" ");
+    @Parameter(0)
+    public String name;
+    @Parameter(1)
+    public scanner scanner;
+    @Parameter(2)
+    public String[] expected;
 
-            ComplexSymbolFactory sf = new ComplexSymbolFactory();
-            Reader in = new BufferedReader(new InputStreamReader(input));
-            scanner s = new scanner(in, sf);
-            Symbol t = s.next_token();
-            int i = 0;
-            while (t.sym != sym.EOF) {
-                // verify each token that we scan
-                assertEquals(expected[i], s.symbolToString(t));
-                t = s.next_token();
-                i++;
+    @Parameters(name = "{0}")
+    public static List<Object[]> data() {
+        ComplexSymbolFactory sf = new ComplexSymbolFactory();
+        List<Object[]> data = new ArrayList<>();
+
+        File testLocation = new File(TEST_FILES_LOCATION);
+        for (File input : testLocation.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(TEST_FILES_INPUT_EXTENSION);
             }
+        })) {
+            String inputName = input.getName();
+            String name = inputName.substring(0, inputName.length() - TEST_FILES_INPUT_EXTENSION.length());
+            String inputPath = input.getPath();
+            String expectedPath = inputPath.substring(0, inputPath.length() - TEST_FILES_INPUT_EXTENSION.length())
+                    + TEST_FILES_EXPECTED_EXTENSION;
+            try {
+                scanner scanner = new scanner(new FileReader(input), sf);
+                String[] expected = new String(Files.readAllBytes(Paths.get(expectedPath)), Charset.defaultCharset())
+                        .split(" ");
+                data.add(new Object[] { name, scanner, expected });
+            } catch (IOException e) {
+                // skip this test
+            }
+        }
+
+        return data;
+    }
+
+    @Test
+    public void testScanner() {
+        try {
+            for (String e : expected) {
+                Symbol t = scanner.next_token();
+                assertEquals(e, scanner.symbolToString(t));
+            }
+            assertEquals(sym.EOF, scanner.next_token().sym);
         } catch (IOException e) {
             fail(e.getMessage());
         }
-    }
-
-    /*
-     * A single test case for simple arithmetic, showing how to use the helper
-     * function above (and the given folder organization).
-     */
-    @Test
-    public void testSimpleArithmetic() {
-        runScannerTestCase("SimpleArithmetic");
-    }
-
-    @Test
-    public void testSimpleClass() {
-        runScannerTestCase("SimpleClass");
-    }
-
-    @Test
-    public void testComments() {
-        runScannerTestCase("Comments");
     }
 }
