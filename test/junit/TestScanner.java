@@ -58,4 +58,9 @@ public class TestScanner {
     public void testSimpleClass() {
         runScannerTestCase("SimpleClass");
     }
+
+    @Test
+    public void testComments() {
+        runScannerTestCase("Comments");
+    }
 }

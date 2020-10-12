@@ -110,6 +110,9 @@ digit = [0-9]
 eol = [\r\n]
 white = {eol}|[ \t]
 
+%x linecomment
+%x blockcomment
+
 %%
 
 /* Token definitions */
@@ -173,6 +176,23 @@ white = {eol}|[ \t]
 
 /* whitespace */
 {white}+ { /* ignore whitespace */ }
+
+/* comments */
+"//" { yybegin(linecomment); }
+"/*" { yybegin(blockcomment); }
+<linecomment> {eol} { yybegin(YYINITIAL); }
+<linecomment> <<EOF>> { yybegin(YYINITIAL); }
+<linecomment> . { /* ignore */ }
+<blockcomment> "*/" { yybegin(YYINITIAL); }
+<blockcomment> .|{eol} { /* ignore */ }
+<blockcomment> <<EOF>> {
+    System.err.printf(
+      "%nUnexpected end of file in block comment on line %d at column %d of input.%n",
+      yyline + 1, yycolumn + 1
+    );
+    yybegin(YYINITIAL);
+    return symbol(sym.error, "");
+  }
 
 /* lexical errors (last so other matches take precedence) */
 . {
