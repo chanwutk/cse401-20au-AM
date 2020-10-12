@@ -1,2 +1,2 @@
 a = b + c;
-display a;
+System.out.println(a);

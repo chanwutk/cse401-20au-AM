@@ -115,8 +115,6 @@ white = {eol}|[ \t]
 /* Token definitions */
 
 /* reserved words (first so that they take precedence over identifiers) */
-"display" { return symbol(sym.DISPLAY); }
-
 "class" { return symbol(sym.CLASS); }
 "public" { return symbol(sym.PUBLIC); }
 "static" { return symbol(sym.STATIC); }
@@ -129,6 +127,7 @@ white = {eol}|[ \t]
 "if" { return symbol(sym.IF); }
 "else" { return symbol(sym.ELSE); }
 "while" { return symbol(sym.WHILE); }
+"return" { return symbol(sym.RETURN); }
 
 "boolean" { return symbol(sym.BOOLEAN); }
 "int" { return symbol(sym.INT); }

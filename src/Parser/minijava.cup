@@ -14,12 +14,12 @@ import java_cup.runtime.*;
 /* Terminals (lexical tokens returned by the scanner): */
 
 /* reserved words */
-terminal DISPLAY;
+terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE, WHILE, RETURN;
 
-terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE, WHILE;
-
+/* built-in types */
 terminal BOOLEAN, INT;
 
+/* built-in function */
 terminal PRINTLN, LENGTH;
 
 /* operators */
@@ -46,7 +46,6 @@ terminal Integer DIGIT;
 nonterminal List<Statement> Program;
 nonterminal Statement Statement;
 nonterminal Assign AssignStatement;
-nonterminal Display DisplayStatement;
 nonterminal Exp Expression;
 nonterminal Identifier Identifier;
 
@@ -66,8 +65,6 @@ Program ::= Statement:s
             {: p.add(s); RESULT = p; :};
 
 Statement   ::= AssignStatement:s
-                {: RESULT = s; :}
-            | DisplayStatement:s
                 {: RESULT = s; :};
 
 AssignStatement ::= Identifier:id BECOMES Expression:expr SEMICOLON
@@ -75,9 +72,6 @@ AssignStatement ::= Identifier:id BECOMES Expression:expr SEMICOLON
 
 Identifier  ::= IDENTIFIER:id
                 {: RESULT = new Identifier(id, idxleft); :};
-
-DisplayStatement ::= DISPLAY:d Expression:expr SEMICOLON
-                     {: RESULT = new Display(expr, dxleft); :};
 
 Expression    ::= IDENTIFIER:name
             {: RESULT = new IdentifierExp(name, namexleft); :}
