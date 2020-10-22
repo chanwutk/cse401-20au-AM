@@ -1,0 +1,5 @@
+CSE 401/M501 Project I - Scanner
+
+Great work, we did't find any major bugs in your compiler!
+
+Total: 40/40
