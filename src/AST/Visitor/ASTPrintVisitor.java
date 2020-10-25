@@ -9,58 +9,86 @@ public class ASTPrintVisitor implements Visitor {
 
   private int indent = 0;
 
-  private void print(ASTNode node, String s) {
+  private void indent() {
     for (int i = 0; i < indent; i++) {
       System.out.print("  ");
     }
-    System.out.println(
-      node.getClass().getName() +
-      ("".equals(s) ? "" : " (" + s + ")") +
-      " (line " + node.line_number + ")"
-    );
   }
 
-  private void print(ASTNode node) {
-    print(node, "");
+  private void space() {
+    System.out.print(" ");
+  }
+
+  private void line(ASTNode node) {
+    System.out.print("(line " + node.line_number + ")");
+  }
+
+  private void name(ASTNode node) {
+    System.out.print(node.getClass().getSimpleName());
+  }
+
+  private void print(String s) {
+    System.out.print(s);
+  }
+  
+  private void findent() {
+    System.out.println();
+    indent++;
+  }
+
+  private void bindent() {
+    indent--;
   }
 
   // MainClass m;
   // ClassDeclList cl;
   public void visit(Program n) {
-    print(n);
-    indent++;
+    indent();
+    name(n);
+    findent();
     n.m.accept(this);
     for (int i = 0; i < n.cl.size(); i++) {
       n.cl.get(i).accept(this);
     }
-    indent--;
+    bindent();
   }
 
   // Identifier i1,i2;
   // Statement s;
   public void visit(MainClass n) {
-    print(n);
-    indent++;
+    indent();
+    name(n);
+    space();
     n.i1.accept(this);
+    space();
+    line(n);
+    findent();
+    print("parameters:");
+    findent();
     n.i2.accept(this);
     n.s.accept(this);
-    indent--;
+    bindent();
+    bindent();
   }
 
   // Identifier i;
   // VarDeclList vl;
   // MethodDeclList ml;
   public void visit(ClassDeclSimple n) {
-    print(n);
-    indent++;
+    indent();
+    name(n);
+    space();
     n.i.accept(this);
+    space();
+    line(n);
+    findent();
     for (int i = 0; i < n.vl.size(); i++) {
       n.vl.get(i).accept(this);
     }
     for (int i = 0; i < n.ml.size(); i++) {
       n.ml.get(i).accept(this);
     }
-    indent--;
+    bindent();
   }
 
   // Identifier i;
@@ -68,10 +96,15 @@ public class ASTPrintVisitor implements Visitor {
   // VarDeclList vl;
   // MethodDeclList ml;
   public void visit(ClassDeclExtends n) {
-    print(n);
-    indent++;
+    indent();
+    name(n);
+    space();
     n.i.accept(this);
+    print(" extends ");
     n.j.accept(this);
+    space();
+    line(n);
+    findent();
     for (int i = 0; i < n.vl.size(); i++) {
       n.vl.get(i).accept(this);
     }
@@ -323,6 +356,7 @@ public class ASTPrintVisitor implements Visitor {
 
   // String s;
   public void visit(Identifier n) {
+    System.out.print(n.s);
     print(n, n.s);
   }
 }
