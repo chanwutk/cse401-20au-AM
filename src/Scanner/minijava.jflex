@@ -135,7 +135,7 @@ white = {eol}|[ \t]
 "boolean" { return symbol(sym.BOOLEAN); }
 "int" { return symbol(sym.INT); }
 
-"System.out.println" { return symbol(sym.PRINTLN); }
+"System.out.println" { return symbol(sym.PRINT); }
 "length" { return symbol(sym.LENGTH); }
 
 /* operators */

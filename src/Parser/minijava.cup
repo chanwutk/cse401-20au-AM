@@ -20,7 +20,7 @@ terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE
 terminal BOOLEAN, INT;
 
 /* built-in function */
-terminal PRINTLN, LENGTH;
+terminal PRINT, LENGTH;
 
 /* operators */
 terminal PLUS, BECOMES;
@@ -89,7 +89,7 @@ AssignStatement ::=
     :};
 
 PrintStatement ::=
-    PRINTLN:print LPAREN Expression:expr1 RPAREN SEMICOLON {:
+    PRINT:print LPAREN Expression:expr1 RPAREN SEMICOLON {:
         RESULT = new Print(expr1, printxleft);
     :};
 
