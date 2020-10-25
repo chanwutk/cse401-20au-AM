@@ -46,6 +46,7 @@ terminal Integer DIGIT;
 nonterminal List<Statement> Program;
 nonterminal Statement Statement;
 nonterminal Assign AssignStatement;
+nonterminal Print PrintStatement;
 nonterminal Exp Expression;
 nonterminal Identifier Identifier;
 
@@ -53,29 +54,57 @@ nonterminal Identifier Identifier;
 /* Precedence declarations: */
 
 precedence left PLUS;
+precedence left MINUS;
+precedence left AND;
+precedence left LESS;
+precedence left TIMES;
+
+precedence right BECOMES;
 
 
 /* Productions: */
 
-Program ::= Statement:s
-            {: List<Statement> p = new LinkedList<Statement>();
-               p.add(s);
-               RESULT = p; :}
-        | Program:p Statement:s
-            {: p.add(s); RESULT = p; :};
+Program ::=
+    Statement:s {:
+        List<Statement> p = new LinkedList<Statement>();
+        p.add(s);
+        RESULT = p;
+    :} |
+    Program:p Statement:s {:
+        p.add(s);
+        RESULT = p;
+    :};
 
-Statement   ::= AssignStatement:s
-                {: RESULT = s; :};
+Statement ::=
+    AssignStatement:s {:
+        RESULT = s;
+    :} |
+    PrintStatement:s {:
+        RESULT = s;
+    :};
 
-AssignStatement ::= Identifier:id BECOMES Expression:expr SEMICOLON
-                    {: RESULT = new Assign(id, expr, idxleft); :};
+AssignStatement ::=
+    Identifier:id BECOMES Expression:expr SEMICOLON {:
+        RESULT = new Assign(id, expr, idxleft);
+    :};
 
-Identifier  ::= IDENTIFIER:id
-                {: RESULT = new Identifier(id, idxleft); :};
+PrintStatement ::=
+    PRINTLN:print LPAREN Expression:expr1 RPAREN SEMICOLON {:
+        RESULT = new Print(expr1, printxleft);
+    :};
 
-Expression    ::= IDENTIFIER:name
-            {: RESULT = new IdentifierExp(name, namexleft); :}
-        | Expression:arg1 PLUS Expression:arg2
-            {: RESULT = new Plus(arg1, arg2, arg1xleft); :}
-        | LPAREN Expression:expr RPAREN
-            {: RESULT = expr; :};
+Identifier ::=
+    IDENTIFIER:id {:
+        RESULT = new Identifier(id, idxleft);
+    :};
+
+Expression ::=
+    IDENTIFIER:name {:
+        RESULT = new IdentifierExp(name, namexleft);
+    :} |
+    Expression:arg1 PLUS Expression:arg2 {:
+        RESULT = new Plus(arg1, arg2, arg1xleft);
+    :} |
+    LPAREN Expression:expr RPAREN {:
+        RESULT = expr;
+    :};
