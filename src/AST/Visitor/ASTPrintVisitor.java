@@ -7,7 +7,7 @@ import AST.*;
 
 public class ASTPrintVisitor implements Visitor {
 
-  private int indent = 0;
+  private int indent_level = 0;
   
   private boolean accept_ln = true;
 
@@ -24,7 +24,7 @@ public class ASTPrintVisitor implements Visitor {
   }
 
   private void indent() {
-    for (int i = 0; i < indent; i++) {
+    for (int i = 0; i < indent_level; i++) {
       print("  ");
     }
   }
@@ -41,13 +41,13 @@ public class ASTPrintVisitor implements Visitor {
     print(node.getClass().getSimpleName());
   }
   
-  private void findent() {
+  private void inc_indent_level() {
     ln();
-    indent++;
+    indent_level++;
   }
 
-  private void bindent() {
-    indent--;
+  private void dec_indent_level() {
+    indent_level--;
   }
 
   // MainClass m;
@@ -55,22 +55,22 @@ public class ASTPrintVisitor implements Visitor {
   public void visit(Program n) {
     indent();
     name(n);
-    findent();
+    inc_indent_level();
       n.m.accept(this); ln();
       for (int i = 0; i < n.cl.size(); i++) {
         n.cl.get(i).accept(this); ln();
       }
-    bindent();
+    dec_indent_level();
   }
 
   // Identifier i1,i2;
   // Statement s;
   public void visit(MainClass n) {
     indent(); name(n); space(); n.i1.accept(this); space(); line(n);
-    findent();
+    inc_indent_level();
       print("args: "); n.i2.accept(this); ln();
       n.s.accept(this); ln();
-    bindent();
+    dec_indent_level();
   }
 
   // Identifier i;
@@ -78,14 +78,14 @@ public class ASTPrintVisitor implements Visitor {
   // MethodDeclList ml;
   public void visit(ClassDeclSimple n) {
     indent(); name(n); space(); n.i.accept(this); space(); line(n);
-    findent();
+    inc_indent_level();
       for (int i = 0; i < n.vl.size(); i++) {
         n.vl.get(i).accept(this); ln();
       }
       for (int i = 0; i < n.ml.size(); i++) {
         n.ml.get(i).accept(this); ln();
       }
-    bindent();
+    dec_indent_level();
   }
 
   // Identifier i;
@@ -95,23 +95,23 @@ public class ASTPrintVisitor implements Visitor {
   public void visit(ClassDeclExtends n) {
     indent(); name(n); space(); n.i.accept(this);
     print(" extends "); n.j.accept(this); space(); line(n);
-    findent();
+    inc_indent_level();
       for (int i = 0; i < n.vl.size(); i++) {
         n.vl.get(i).accept(this); ln();
       }
       for (int i = 0; i < n.ml.size(); i++) {
         n.ml.get(i).accept(this); ln();
       }
-    bindent();
+    dec_indent_level();
   }
 
   // Type t;
   // Identifier i;
   public void visit(VarDecl n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); n.t.accept(this); space(); n.i.accept(this); ln();
-    bindent();
+    dec_indent_level();
   }
 
   // Type t;
@@ -122,15 +122,15 @@ public class ASTPrintVisitor implements Visitor {
   // Exp e;
   public void visit(MethodDecl n) {
     indent(); name(n); space(); n.i.accept(this); space(); line(n);
-    findent();
+    inc_indent_level();
     n.t.accept(this);
       indent(); print("return type: "); n.t.accept(this); ln();
       indent(); print("parameters:");
-      findent();
+      inc_indent_level();
         for (int i = 0; i < n.fl.size(); i++) {
           indent(); n.fl.get(i).accept(this); ln();
         }
-      bindent();
+      dec_indent_level();
       for (int i = 0; i < n.vl.size(); i++) {
         n.vl.get(i).accept(this); ln();
       }
@@ -138,10 +138,10 @@ public class ASTPrintVisitor implements Visitor {
         n.sl.get(i).accept(this); ln();
       }
       print("return "); line(n.e);
-      findent();
+      inc_indent_level();
         n.e.accept(this);
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // Type t;
@@ -170,98 +170,98 @@ public class ASTPrintVisitor implements Visitor {
   // StatementList sl;
   public void visit(Block n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
     for (int i = 0; i < n.sl.size(); i++) {
       n.sl.get(i).accept(this); ln();
     }
-    bindent();
+    dec_indent_level();
   }
 
   // Exp e;
   // Statement s1,s2;
   public void visit(If n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); print("condition:");
-      findent();
+      inc_indent_level();
         n.e.accept(this); ln();
-      bindent();
+      dec_indent_level();
       indent(); print("then:");
-      findent();
+      inc_indent_level();
         n.s1.accept(this); ln();
-      bindent();
+      dec_indent_level();
       indent(); print("else:");
-      findent();
+      inc_indent_level();
         n.s2.accept(this); ln();
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // Exp e;
   // Statement s;
   public void visit(While n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); print("condition:");
-      findent();
+      inc_indent_level();
         n.e.accept(this); ln();
-      bindent();
+      dec_indent_level();
       indent(); print("do:");
-      findent();
+      inc_indent_level();
         n.s.accept(this); ln();
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // Exp e;
   public void visit(Print n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       n.e.accept(this); ln();
-    bindent();
+    dec_indent_level();
   }
 
   // Identifier i;
   // Exp e;
   public void visit(Assign n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); print("to: "); n.i.accept(this); ln();
       indent(); print("exp:");
-      findent();
+      inc_indent_level();
         n.e.accept(this); ln();
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // Identifier i;
   // Exp e1,e2;
   public void visit(ArrayAssign n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); print("array: "); n.i.accept(this); ln();
       indent(); print("index:");
-      findent();
+      inc_indent_level();
         n.e1.accept(this);
-      bindent();
+      dec_indent_level();
       indent(); print("exp:");
-      findent();
+      inc_indent_level();
         n.e2.accept(this); ln();
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
   
   private void binary(String op, Exp e1, Exp e2) {
     indent(); print("(");
-    findent();
+    inc_indent_level();
       e1.accept(this); ln();
-    bindent();
+    dec_indent_level();
     indent(); print(")"); ln();
     indent(); print(op); ln();
     indent(); print("("); ln();
-    findent();
+    inc_indent_level();
       e2.accept(this); ln();
-    bindent();
+    dec_indent_level();
     indent(); print("(");
   }
 
@@ -293,24 +293,24 @@ public class ASTPrintVisitor implements Visitor {
   // Exp e1,e2;
   public void visit(ArrayLookup n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); print("array:"); ln();
-      findent();
+      inc_indent_level();
         n.e1.accept(this); ln();
-      bindent();
+      dec_indent_level();
       indent(); print("index:"); ln();
-      findent();
+      inc_indent_level();
         n.e2.accept(this); ln();
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // Exp e;
   public void visit(ArrayLength n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       n.e.accept(this); ln();
-    bindent();
+    dec_indent_level();
   }
 
   // Exp e;
@@ -318,25 +318,25 @@ public class ASTPrintVisitor implements Visitor {
   // ExpList el;
   public void visit(Call n) {
     indent(); name(n); space(); line(n);
-    findent();
+    inc_indent_level();
       indent(); print("object:"); ln();
-      findent();
+      inc_indent_level();
         n.e.accept(this); ln();
-      bindent();
+      dec_indent_level();
       indent(); print("method:"); ln();
-      findent();
+      inc_indent_level();
         n.i.accept(this); ln();
-      bindent();
+      dec_indent_level();
       indent(); print("parameters:"); ln();
-      findent();
+      inc_indent_level();
         for ( int i = 0; i < n.el.size(); i++ ) {
           indent(); print("param " + i + ":"); ln();
-          findent();
+          inc_indent_level();
             n.el.get(i).accept(this); ln();
-          bindent();
+          dec_indent_level();
         }
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // int i;
@@ -364,28 +364,28 @@ public class ASTPrintVisitor implements Visitor {
   // Exp e;
   public void visit(NewArray n) {
     indent(); name(n);
-    findent();
+    inc_indent_level();
       indent(); print("size:"); ln();
-      findent();
+      inc_indent_level();
         n.e.accept(this); ln();
-      bindent();
-    bindent();
+      dec_indent_level();
+    dec_indent_level();
   }
 
   // Identifier i;
   public void visit(NewObject n) {
     indent(); name(n);
-    findent();
+    inc_indent_level();
       indent(); print("type: "); print(n.i.s); ln();
-    bindent();
+    dec_indent_level();
   }
 
   // Exp e;
   public void visit(Not n) {
     indent(); print("! (");
-    findent();
+    inc_indent_level();
       n.e.accept(this); ln();
-    bindent();
+    dec_indent_level();
     indent(); print(")"); ln();
   }
 
