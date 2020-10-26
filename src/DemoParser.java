@@ -25,7 +25,7 @@ public class DemoParser {
 	    @SuppressWarnings("unchecked")
             List<Statement> program = (List<Statement>)root.value;
             for (Statement statement: program) {
-                statement.accept(new ASTPrintVisitor());
+                statement.accept(new PrettyPrintVisitor());
                 System.out.print("\n");
             }
         } catch (Exception e) {
