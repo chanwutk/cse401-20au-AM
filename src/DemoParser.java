@@ -24,7 +24,7 @@ public class DemoParser {
             // declarations in the CUP input file giving the type of the
             // root node, so we suppress warnings for the next assignment.
             @SuppressWarnings("unchecked")
-            Exp program = (Exp) root.value;
+            Statement program = (Statement) root.value;
             program.accept(new ASTPrintVisitor());
             System.out.print("\n");
         } catch (Exception e) {

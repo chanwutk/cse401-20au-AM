@@ -43,10 +43,9 @@ terminal Integer DIGIT;
 
 /* Nonterminals (constructed by parser): */
 
-nonterminal Exp Program;
+nonterminal Statement Program;
 nonterminal Statement Statement;
-nonterminal Assign AssignStatement;
-nonterminal Print PrintStatement;
+nonterminal StatementList StatementList;
 nonterminal Exp Expression;
 nonterminal Exp AtomicExpression;
 nonterminal Identifier Identifier;
@@ -63,26 +62,41 @@ precedence right NOT;
 /* Productions: */
 
 Program ::=
-    Expression:e {:
-        RESULT = e;
+    Statement:s {:
+        RESULT = s;
     :};
 
 Statement ::=
-    AssignStatement:s {:
-        RESULT = s;
+    LBRACKET:l RBRACKET:r {:
+        RESULT = new Block(new StatementList(rxleft), lxleft);
     :} |
-    PrintStatement:s {:
-        RESULT = s;
+    LBRACKET:l StatementList:stmts RBRACKET {:
+        RESULT = new Block(stmts, lxleft);
+    :} |
+    IF:i LPAREN Expression:cond RPAREN Statement:b1 ELSE Statement:b2 {:
+        RESULT = new If(cond, b1, b2, ixleft);
+    :} |
+    WHILE:w LPAREN Expression:cond RPAREN Statement:body {:
+        RESULT = new While(cond, body, wxleft);
+    :} |
+    PRINT:p LPAREN Expression:expr RPAREN SEMICOLON {:
+        RESULT = new Print(expr, pxleft);
+    :} |
+    Identifier:id BECOMES Expression:value SEMICOLON {:
+        RESULT = new Assign(id, value, idxleft);
+    :} |
+    Identifier:id LBRACKET_SQUARE Expression:index RBRACKET_SQUARE BECOMES Expression:value SEMICOLON {:
+        RESULT = new ArrayAssign(id, index, value, idxleft);
     :};
 
-AssignStatement ::=
-    Identifier:id BECOMES Expression:expr SEMICOLON {:
-        RESULT = new Assign(id, expr, idxleft);
-    :};
-
-PrintStatement ::=
-    PRINT:print LPAREN Expression:expr1 RPAREN SEMICOLON {:
-        RESULT = new Print(expr1, printxleft);
+StatementList ::=
+    Statement:stmt {:
+        RESULT = new StatementList(stmtxleft);
+        RESULT.add(stmt);
+    :} |
+    StatementList:stmts Statement:stmt {:
+        RESULT = stmts;
+        RESULT.add(stmt);
     :};
 
 Identifier ::=
