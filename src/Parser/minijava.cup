@@ -43,36 +43,28 @@ terminal Integer DIGIT;
 
 /* Nonterminals (constructed by parser): */
 
-nonterminal List<Statement> Program;
+nonterminal Exp Program;
 nonterminal Statement Statement;
 nonterminal Assign AssignStatement;
 nonterminal Print PrintStatement;
 nonterminal Exp Expression;
+nonterminal Exp AtomicExpression;
 nonterminal Identifier Identifier;
-
+nonterminal ExpList ExpressionList;
 
 /* Precedence declarations: */
 
-precedence left PLUS;
-precedence left MINUS;
 precedence left AND;
-precedence left LESS;
+precedence nonassoc LESS;
+precedence left PLUS, MINUS;
 precedence left TIMES;
-
-precedence right BECOMES;
-
+precedence right NOT;
 
 /* Productions: */
 
 Program ::=
-    Statement:s {:
-        List<Statement> p = new LinkedList<Statement>();
-        p.add(s);
-        RESULT = p;
-    :} |
-    Program:p Statement:s {:
-        p.add(s);
-        RESULT = p;
+    Expression:e {:
+        RESULT = e;
     :};
 
 Statement ::=
@@ -98,13 +90,73 @@ Identifier ::=
         RESULT = new Identifier(id, idxleft);
     :};
 
-Expression ::=
+AtomicExpression ::=
+    AtomicExpression:arr LBRACKET_SQUARE Expression:index RBRACKET_SQUARE {:
+        RESULT = new ArrayLookup(arr, index, arrxleft);
+    :} |
+    AtomicExpression:arr DOT LENGTH {:
+        RESULT = new ArrayLength(arr, arrxleft);
+    :} |
+    AtomicExpression:o DOT Identifier:m LPAREN RPAREN:r {:
+        RESULT = new Call(o, m, new ExpList(rxleft), oxleft);
+    :} |
+    AtomicExpression:o DOT Identifier:m LPAREN ExpressionList:args RPAREN {:
+        RESULT = new Call(o, m, args, oxleft);
+    :} |
+    DIGIT:d {:
+        RESULT = new IntegerLiteral(d, dxleft);
+    :} |
+    TRUE:t {:
+        RESULT = new True(txleft);
+    :} |
+    FALSE:f {:
+        RESULT = new False(fxleft);
+    :} |
     IDENTIFIER:name {:
         RESULT = new IdentifierExp(name, namexleft);
+    :} |
+    THIS:t {:
+        RESULT = new This(txleft);
+    :} |
+    NEW:n INT LBRACKET_SQUARE Expression:size RBRACKET_SQUARE {:
+        RESULT = new NewArray(size, nxleft);
+    :} |
+    NEW:n Identifier:id LPAREN RPAREN {:
+        RESULT = new NewObject(id, nxleft);
+    :} |
+    LPAREN Expression:expr RPAREN {:
+        RESULT = expr;
+    :};
+
+Expression ::=
+    AtomicExpression:expr {:
+        RESULT = expr;
+    :} |
+    Expression:arg1 AND Expression:arg2 {:
+        RESULT = new And(arg1, arg2, arg1xleft);
+    :} |
+    Expression:arg1 LESS Expression:arg2 {:
+        RESULT = new LessThan(arg1, arg2, arg1xleft);
     :} |
     Expression:arg1 PLUS Expression:arg2 {:
         RESULT = new Plus(arg1, arg2, arg1xleft);
     :} |
-    LPAREN Expression:expr RPAREN {:
-        RESULT = expr;
+    Expression:arg1 MINUS Expression:arg2 {:
+        RESULT = new Minus(arg1, arg2, arg1xleft);
+    :} |
+    Expression:arg1 TIMES Expression:arg2 {:
+        RESULT = new Times(arg1, arg2, arg1xleft);
+    :} |
+    NOT:n Expression:expr {:
+        RESULT = new Not(expr, nxleft);
+    :};
+
+ExpressionList ::=
+    Expression:expr {:
+        RESULT = new ExpList(exprxleft);
+        RESULT.add(expr);
+    :} |
+    ExpressionList:exprlst COMMA Expression:expr {:
+        RESULT = exprlst;
+        RESULT.add(expr);
     :};
