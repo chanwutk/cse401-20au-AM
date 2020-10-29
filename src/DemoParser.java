@@ -4,8 +4,6 @@ import AST.*;
 import AST.Visitor.*;
 import java_cup.runtime.Symbol;
 import java_cup.runtime.ComplexSymbolFactory;
-import java.util.*;
-import java.beans.Expression;
 import java.io.*;
 
 public class DemoParser {
