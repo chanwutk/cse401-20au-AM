@@ -33,7 +33,7 @@ public class MiniJava {
 
 	public static void main(String[] args) {
 		Set<String> flags = getFlags(args);
-		if (flags != null) {
+		if (flags == null || args.length < 2) {
 			System.err.println("Usage: MiniJava [-S] [-A] [-P] <filename>");
 			System.exit(1);
 		}
