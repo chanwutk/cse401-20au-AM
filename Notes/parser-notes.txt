@@ -1,0 +1,7 @@
+Changes from the MiniJava website grammar:
+	- For all productions with `(xxx)*`, we replaced the star with a separate non-terminal `xxxList`
+	- We added non-terminals `NonEmptyFormalList` and `NonEmptyExpressionList` to correctly parse commas
+	- We added non-terminal `NonEmptyStatementList` to avoid shift-reduce conflict between `VarDecl` and `StatementList` on `IDENTIFIER`
+	- We added non-terminal `AtomicExpression` to correctly handle precedence of `[]` and `.`
+
+There is no shift-reduce conflict remaining.
