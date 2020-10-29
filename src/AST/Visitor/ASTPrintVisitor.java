@@ -11,10 +11,11 @@ public class ASTPrintVisitor implements Visitor {
 
   private final boolean includeLineNumber;
   private final PrintStream out;
+  private final ExpPrintVisitor exp;
 
   private int indent_level = 0;
-
   private boolean accept_ln = true;
+  private final SingleLineTestVisitor singleline = new SingleLineTestVisitor();
 
   public ASTPrintVisitor() {
     this(System.out, true);
@@ -22,6 +23,7 @@ public class ASTPrintVisitor implements Visitor {
 
   public ASTPrintVisitor(PrintStream out, boolean includeLineNumber) {
     this.out = out;
+    this.exp = new ExpPrintVisitor(out);
     this.includeLineNumber = includeLineNumber;
   }
 
@@ -282,9 +284,35 @@ public class ASTPrintVisitor implements Visitor {
   }
 
   private void binary(String op, Exp e1, Exp e2) {
-    wrapExp(e1);
-    indent(); print(op); ln();
-    wrapExp(e2);
+    singleline.clear();
+    e1.accept(singleline);
+    boolean oneline1 = singleline.isSingleLine();
+
+    singleline.clear();
+    e2.accept(singleline);
+    boolean oneline2 = singleline.isSingleLine();
+
+    if (oneline1 && oneline2) {
+      indent();
+      e1.accept(exp);
+      print(" " + op + " ");
+      e2.accept(exp);
+      ln();
+    } else {
+      if (oneline1) {
+        indent();
+        e1.accept(exp); ln();
+      } else {
+        wrapExp(e1);
+      }
+      indent(); print(op); ln();
+      if (oneline2) {
+        indent();
+        e2.accept(exp); ln();
+      } else {
+        wrapExp(e2);
+      }
+    }
   }
 
   // Exp e1,e2;
@@ -403,11 +431,20 @@ public class ASTPrintVisitor implements Visitor {
 
   // Exp e;
   public void visit(Not n) {
-    indent(); print("! (");
-    inc_indent_level();
-      n.e.accept(this); ln();
-    dec_indent_level();
-    indent(); print(")"); ln();
+    singleline.clear();
+    n.e.accept(singleline);
+
+    if (singleline.isSingleLine()) {
+      indent(); print("!");
+      n.e.accept(exp);
+      ln();
+    } else {
+      indent(); print("! (");
+      inc_indent_level();
+        n.e.accept(this); ln();
+      dec_indent_level();
+      indent(); print(")"); ln();
+    }
   }
 
   // String s;
