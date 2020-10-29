@@ -1,14 +1,21 @@
 package AST;
 
-import AST.Visitor.Visitor;
 import java_cup.runtime.ComplexSymbolFactory.Location;
 
 abstract public class ASTNode {
   // Line number in source file.
-  public final int line_number;
+  public int line_number;
 
   // Constructor
   public ASTNode(Location pos) {
-    this.line_number = pos.getLine();
+    setLocation(pos);
+  }
+
+  public void setLocation(Location pos) {
+    if (pos != null) {
+      line_number = pos.getLine();
+    } else {
+      line_number = 0;
+    }
   }
 }

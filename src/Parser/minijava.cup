@@ -43,9 +43,20 @@ terminal Integer DIGIT;
 
 /* Nonterminals (constructed by parser): */
 
-nonterminal Statement Program;
+nonterminal Program Program;
+nonterminal MainClass MainClass;
+nonterminal ClassDecl ClassDeclaration;
+nonterminal ClassDeclList ClassDeclarationList;
+nonterminal VarDecl VarDeclaration;
+nonterminal VarDeclList VarDeclarationList;
+nonterminal MethodDecl MethodDeclaration;
+nonterminal MethodDeclList MethodDeclarationList;
+nonterminal Formal Formal;
+nonterminal FormalList FormalList;
+nonterminal Type Type;
 nonterminal Statement Statement;
 nonterminal StatementList StatementList;
+nonterminal StatementList NonEmptyStatementList;
 nonterminal Exp Expression;
 nonterminal Exp AtomicExpression;
 nonterminal Identifier Identifier;
@@ -62,15 +73,97 @@ precedence right NOT;
 /* Productions: */
 
 Program ::=
-    Statement:s {:
-        RESULT = s;
+    MainClass:main ClassDeclarationList:classes {:
+        classes.setLocation(classesxleft);
+        RESULT = new Program(main, classes, mainxleft);
+    :};
+
+MainClass ::=
+    CLASS:c Identifier:id LBRACKET PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET_SQUARE RBRACKET_SQUARE Identifier:args RPAREN LBRACKET Statement:body RBRACKET RBRACKET {:
+        RESULT = new MainClass(id, args, body, cxleft);
+    :};
+
+ClassDeclaration ::=
+    CLASS:c Identifier:cls LBRACKET VarDeclarationList:fields MethodDeclarationList:methods RBRACKET {:
+        fields.setLocation(fieldsxleft);
+        methods.setLocation(methodsxleft);
+        RESULT = new ClassDeclSimple(cls, fields, methods, cxleft);
+    :} |
+    CLASS:c Identifier:cls EXTENDS Identifier:base LBRACKET VarDeclarationList:fields MethodDeclarationList:methods RBRACKET {:
+        fields.setLocation(fieldsxleft);
+        methods.setLocation(methodsxleft);
+        RESULT = new ClassDeclExtends(cls, base, fields, methods, cxleft);
+    :};
+
+ClassDeclarationList ::=
+    {:
+        RESULT = new ClassDeclList(null);
+    :} |
+    ClassDeclarationList:classes ClassDeclaration:cls {:
+        classes.add(cls);
+        RESULT = classes;
+    :};
+
+VarDeclaration ::=
+    Type:t Identifier:var SEMICOLON {:
+        RESULT = new VarDecl(t, var, txleft);
+    :};
+
+VarDeclarationList ::=
+    {:
+        RESULT = new VarDeclList(null);
+    :} |
+    VarDeclarationList:vars VarDeclaration:var {:
+        vars.add(var);
+        RESULT = vars;
+    :};
+
+MethodDeclaration ::=
+    PUBLIC:p Type:rt Identifier:id LPAREN FormalList:params RPAREN LBRACKET VarDeclarationList:vars StatementList:body RETURN Expression:rv SEMICOLON RBRACKET {:
+        params.setLocation(paramsxleft);
+        RESULT = new MethodDecl(rt, id, params, vars, body, rv, pxleft);
+    :};
+
+MethodDeclarationList ::=
+    {:
+        RESULT = new MethodDeclList(null);
+    :} |
+    MethodDeclarationList:methods MethodDeclaration:method {:
+        methods.add(method);
+        RESULT = methods;
+    :};
+
+Formal ::=
+    Type:t Identifier:id {:
+        RESULT = new Formal(t, id, txleft);
+    :};
+
+FormalList ::=
+    {:
+        RESULT = new FormalList(null);
+    :} |
+    FormalList:params Formal:param {:
+        params.add(param);
+        RESULT = params;
+    :};
+
+Type ::=
+    INT:i LBRACKET_SQUARE RBRACKET_SQUARE {:
+        RESULT = new IntArrayType(ixleft);
+    :} |
+    BOOLEAN:b {:
+        RESULT = new BooleanType(bxleft);
+    :} |
+    INT:i {:
+        RESULT = new IntegerType(ixleft);
+    :} |
+    IDENTIFIER:t {:
+        RESULT = new IdentifierType(t, txleft);
     :};
 
 Statement ::=
-    LBRACKET:l RBRACKET:r {:
-        RESULT = new Block(new StatementList(rxleft), lxleft);
-    :} |
     LBRACKET:l StatementList:stmts RBRACKET {:
+        stmts.setLocation(stmtsxleft);
         RESULT = new Block(stmts, lxleft);
     :} |
     IF:i LPAREN Expression:cond RPAREN Statement:b1 ELSE Statement:b2 {:
@@ -90,13 +183,23 @@ Statement ::=
     :};
 
 StatementList ::=
-    Statement:stmt {:
-        RESULT = new StatementList(stmtxleft);
-        RESULT.add(stmt);
+    {:
+        RESULT = new StatementList(null);
     :} |
-    StatementList:stmts Statement:stmt {:
+    NonEmptyStatementList:stmts {:
         RESULT = stmts;
-        RESULT.add(stmt);
+    :};
+
+// Only concat statements onto non-empty statement list to avoid shift-reduce conflict with VarDeclarationList
+NonEmptyStatementList ::=
+    Statement:stmt {:
+        StatementList stmts = new StatementList(null);
+        stmts.add(stmt);
+        RESULT = stmts;
+    :} |
+    NonEmptyStatementList:stmts Statement:stmt {:
+        stmts.add(stmt);
+        RESULT = stmts;
     :};
 
 Identifier ::=
@@ -111,10 +214,8 @@ AtomicExpression ::=
     AtomicExpression:arr DOT LENGTH {:
         RESULT = new ArrayLength(arr, arrxleft);
     :} |
-    AtomicExpression:o DOT Identifier:m LPAREN RPAREN:r {:
-        RESULT = new Call(o, m, new ExpList(rxleft), oxleft);
-    :} |
     AtomicExpression:o DOT Identifier:m LPAREN ExpressionList:args RPAREN {:
+        args.setLocation(argsxleft);
         RESULT = new Call(o, m, args, oxleft);
     :} |
     DIGIT:d {:
@@ -166,11 +267,10 @@ Expression ::=
     :};
 
 ExpressionList ::=
-    Expression:expr {:
-        RESULT = new ExpList(exprxleft);
-        RESULT.add(expr);
+    {:
+        RESULT = new ExpList(null);
     :} |
-    ExpressionList:exprlst COMMA Expression:expr {:
-        RESULT = exprlst;
-        RESULT.add(expr);
+    ExpressionList:exprs COMMA Expression:expr {:
+        exprs.add(expr);
+        RESULT = exprs;
     :};
