@@ -2,23 +2,37 @@ package AST.Visitor;
 
 import AST.*;
 
+import java.io.PrintStream;
+
 // Sample print visitor from MiniJava web site with small modifications for UW CSE.
 // HP 10/11
 
 public class ASTPrintVisitor implements Visitor {
 
+  private final boolean includeLineNumber;
+  private final PrintStream out;
+
   private int indent_level = 0;
-  
+
   private boolean accept_ln = true;
 
+  public ASTPrintVisitor() {
+    this(System.out, true);
+  }
+
+  public ASTPrintVisitor(PrintStream out, boolean includeLineNumber) {
+    this.out = out;
+    this.includeLineNumber = includeLineNumber;
+  }
+
   private void print(String s) {
-    System.out.print(s);
+    out.print(s);
     accept_ln = true;
   }
 
   private void ln() {
     if (accept_ln) {
-      System.out.println();
+      out.println();
     }
     accept_ln = false;
   }
@@ -34,13 +48,14 @@ public class ASTPrintVisitor implements Visitor {
   }
 
   private void line(ASTNode node) {
-    print("(line " + node.line_number + ")");
+    if (includeLineNumber)
+      print("(line " + node.line_number + ")");
   }
 
   private void name(ASTNode node) {
     print(node.getClass().getSimpleName());
   }
-  
+
   private void inc_indent_level() {
     ln();
     indent_level++;
@@ -253,7 +268,7 @@ public class ASTPrintVisitor implements Visitor {
   private boolean oneLineExp(Exp e) {
     return e instanceof IntegerLiteral || e instanceof True || e instanceof False || e instanceof IdentifierExp || e instanceof This;
   }
-  
+
   private void wrapExp(Exp e) {
     if (!oneLineExp(e)) {
       indent(); print("(");
@@ -265,7 +280,7 @@ public class ASTPrintVisitor implements Visitor {
       indent(); print(")"); ln();
     }
   }
-  
+
   private void binary(String op, Exp e1, Exp e2) {
     wrapExp(e1);
     indent(); print(op); ln();
@@ -276,7 +291,7 @@ public class ASTPrintVisitor implements Visitor {
   public void visit(And n) {
     binary("&&", n.e1, n.e2);
   }
-  
+
   // Exp e1,e2;
   public void visit(LessThan n) {
     binary("<", n.e1, n.e2);
@@ -286,17 +301,17 @@ public class ASTPrintVisitor implements Visitor {
   public void visit(Plus n) {
     binary("+", n.e1, n.e2);
   }
-  
+
   // Exp e1,e2;
   public void visit(Minus n) {
     binary("-", n.e1, n.e2);
   }
-  
+
   // Exp e1,e2;
   public void visit(Times n) {
     binary("*", n.e1, n.e2);
   }
-  
+
   // Exp e1,e2;
   public void visit(ArrayLookup n) {
     indent(); name(n); space(); line(n);
@@ -311,7 +326,7 @@ public class ASTPrintVisitor implements Visitor {
       dec_indent_level();
     dec_indent_level();
   }
-  
+
   // Exp e;
   public void visit(ArrayLength n) {
     indent(); name(n); space(); line(n);
@@ -319,7 +334,7 @@ public class ASTPrintVisitor implements Visitor {
       n.e.accept(this); ln();
     dec_indent_level();
   }
-  
+
   // Exp e;
   // Identifier i;
   // ExpList el;
@@ -344,29 +359,29 @@ public class ASTPrintVisitor implements Visitor {
       dec_indent_level();
     dec_indent_level();
   }
-  
+
   // int i;
   public void visit(IntegerLiteral n) {
     indent(); print(n.i + "");
   }
-  
+
   public void visit(True n) {
     indent(); print("true");
   }
-  
+
   public void visit(False n) {
     indent(); print("false");
   }
-  
+
   // String s;
   public void visit(IdentifierExp n) {
     indent(); print("id(" + n.s + ")");
   }
-  
+
   public void visit(This n) {
     indent(); print("this");
   }
-  
+
   // Exp e;
   public void visit(NewArray n) {
     indent(); name(n);
@@ -377,7 +392,7 @@ public class ASTPrintVisitor implements Visitor {
       dec_indent_level();
     dec_indent_level();
   }
-  
+
   // Identifier i;
   public void visit(NewObject n) {
     indent(); name(n);
@@ -385,7 +400,7 @@ public class ASTPrintVisitor implements Visitor {
       indent(); print("type: "); print(n.i.s); ln();
     dec_indent_level();
   }
-  
+
   // Exp e;
   public void visit(Not n) {
     indent(); print("! (");
@@ -394,7 +409,7 @@ public class ASTPrintVisitor implements Visitor {
     dec_indent_level();
     indent(); print(")"); ln();
   }
-  
+
   // String s;
   public void visit(Identifier n) {
     print(n.s);
