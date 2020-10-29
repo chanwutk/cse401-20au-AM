@@ -53,6 +53,7 @@ nonterminal MethodDecl MethodDeclaration;
 nonterminal MethodDeclList MethodDeclarationList;
 nonterminal Formal Formal;
 nonterminal FormalList FormalList;
+nonterminal FormalList NonEmptyFormalList;
 nonterminal Type Type;
 nonterminal Statement Statement;
 nonterminal StatementList StatementList;
@@ -61,6 +62,7 @@ nonterminal Exp Expression;
 nonterminal Exp AtomicExpression;
 nonterminal Identifier Identifier;
 nonterminal ExpList ExpressionList;
+nonterminal ExpList NonEmptyExpressionList;
 
 /* Precedence declarations: */
 
@@ -142,7 +144,17 @@ FormalList ::=
     {:
         RESULT = new FormalList(null);
     :} |
-    FormalList:params Formal:param {:
+    NonEmptyFormalList:params {:
+        RESULT = params;
+    :};
+
+NonEmptyFormalList ::=
+    Formal:param {:
+        FormalList params = new FormalList(null);
+        params.add(param);
+        RESULT = params;
+    :} |
+    NonEmptyFormalList:params COMMA Formal:param {:
         params.add(param);
         RESULT = params;
     :};
@@ -270,7 +282,17 @@ ExpressionList ::=
     {:
         RESULT = new ExpList(null);
     :} |
-    ExpressionList:exprs COMMA Expression:expr {:
+    NonEmptyExpressionList:exprs {:
+        RESULT = exprs;
+    :};
+
+NonEmptyExpressionList ::=
+    Expression:expr {:
+        ExpList exprs = new ExpList(null);
+        exprs.add(expr);
+        RESULT = exprs;
+    :} |
+    NonEmptyExpressionList:exprs COMMA Expression:expr {:
         exprs.add(expr);
         RESULT = exprs;
     :};
