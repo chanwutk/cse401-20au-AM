@@ -68,7 +68,7 @@ public class ASTPrintVisitor implements Visitor {
   public void visit(MainClass n) {
     indent(); name(n); space(); n.i1.accept(this); space(); line(n);
     inc_indent_level();
-      print("args: "); n.i2.accept(this); ln();
+      indent(); print("args: "); n.i2.accept(this); ln();
       n.s.accept(this); ln();
     dec_indent_level();
   }
@@ -123,7 +123,6 @@ public class ASTPrintVisitor implements Visitor {
   public void visit(MethodDecl n) {
     indent(); name(n); space(); n.i.accept(this); space(); line(n);
     inc_indent_level();
-    n.t.accept(this);
       indent(); print("return type: "); n.t.accept(this); ln();
       indent(); print("parameters:");
       inc_indent_level();
@@ -137,7 +136,7 @@ public class ASTPrintVisitor implements Visitor {
       for (int i = 0; i < n.sl.size(); i++) {
         n.sl.get(i).accept(this); ln();
       }
-      print("return "); line(n.e);
+      indent(); print("return "); line(n.e);
       inc_indent_level();
         n.e.accept(this);
       dec_indent_level();
@@ -242,7 +241,7 @@ public class ASTPrintVisitor implements Visitor {
       indent(); print("array: "); n.i.accept(this); ln();
       indent(); print("index:");
       inc_indent_level();
-        n.e1.accept(this);
+        n.e1.accept(this); ln();
       dec_indent_level();
       indent(); print("exp:");
       inc_indent_level();
@@ -325,7 +324,7 @@ public class ASTPrintVisitor implements Visitor {
       dec_indent_level();
       indent(); print("method:"); ln();
       inc_indent_level();
-        n.i.accept(this); ln();
+        indent(); n.i.accept(this); ln();
       dec_indent_level();
       indent(); print("parameters:"); ln();
       inc_indent_level();
