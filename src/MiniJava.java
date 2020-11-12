@@ -4,9 +4,9 @@ import java.util.Set;
 
 import AST.Program;
 import AST.Visitor.*;
+import Info.Info;
 import java_cup.runtime.Symbol;
 import java_cup.runtime.ComplexSymbolFactory;
-
 import Scanner.scanner;
 import Parser.parser;
 import Parser.sym;
@@ -39,6 +39,7 @@ public class MiniJava {
 		}
 
 		String file = args[args.length - 1];
+		Info.file = file;
 		boolean error = false;
 
 		for (String flag : flags) {
