@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 import AST.*;
 import Symbols.BaseType;
@@ -18,7 +19,6 @@ import Info.Info;
 public class RegisterClassesVisitor implements Visitor {
 
   private SymbolTable table;
-  private Signature retsign;
 
   public RegisterClassesVisitor(SymbolTable table) {
     this.table = table;
@@ -75,22 +75,43 @@ public class RegisterClassesVisitor implements Visitor {
   public void visit(Program n) {
     ClassDeclList cl = n.cl;
     List<ClassDecl> sorted_cl = toposort(cl);
-    sorted_cl.forEach(cd -> {
-      if (cd instanceof ClassDeclSimple) {
-        ClassDeclSimple cs = (ClassDeclSimple) cd;
+    Map<Boolean, List<ClassDecl>> partition = sorted_cl.stream()
+      .collect(Collectors.partitioningBy(cd -> cd instanceof ClassDeclSimple));
+    
+    partition.get(true).stream().map(cd -> (ClassDeclSimple) cd).forEach(cs -> {
+      if (table.containsClass(cs.i.s)) {
+        System.err.printf("%s:%d: error: class already exist", Info.file, cs.line_number);
+        System.err.printf("  symbol:    class %s\n", cs.i.s);
+        System.err.printf("  location:  class %s\n", Info.currentClass);
+      } else {
         table.putClass(cs.i.s, new ClassType(cs.i.s, null));
-      } else if (cd instanceof ClassDeclExtends) {
-        ClassDeclExtends ce = (ClassDeclExtends) cd;
-        Type base = table.getClass(ce.j);
-        if (base instanceof ClassType) {
-          table.putClass(ce.i.s, new ClassType(ce.i.s, (ClassType) base));
-        } else {
-          System.err.printf("%s:%d: error: extending class does not exist", Info.file, ce.line_number);
-          System.err.printf("  symbol:   class %s\n", ce.i.s);
-          System.err.printf("  symbol:  parent %s\n", ce.j.s);
-          System.err.printf("  location: class %s\n", Info.currentClass);
-        }
       }
+
+      table = table.enterClassScope(cs.i.s);
+      cs.accept(this);
+      table = table.exitScope();
+    });
+
+    partition.get(false).stream().map(cd -> (ClassDeclExtends) cd).forEach(ce -> {
+      Type base = table.getClass(ce.j);
+      if (base instanceof ClassType) {
+        if (table.containsClass(ce.i.s)) {
+          System.err.printf("%s:%d: error: class already exist", Info.file, ce.line_number);
+          System.err.printf("  symbol:    class %s\n", ce.i.s);
+          System.err.printf("  location:  class %s\n", Info.currentClass);
+        } else {
+          table.putClass(ce.i.s, new ClassType(ce.i.s, (ClassType) base));
+        }
+      } else {
+        System.err.printf("%s:%d: error: extending class does not exist", Info.file, ce.line_number);
+        System.err.printf("  symbol:   class %s\n", ce.i.s);
+        System.err.printf("  symbol:  parent %s\n", ce.j.s);
+        System.err.printf("  location: class %s\n", Info.currentClass);
+      }
+
+      table = table.enterClassScope(ce.i.s);
+      ce.accept(this);
+      table = table.exitScope();
     });
 
     sorted_cl.forEach(cd -> cd.accept(this));
@@ -128,13 +149,33 @@ public class RegisterClassesVisitor implements Visitor {
       int len = n.vl.size();
       for (int i = 0; i < len; i++) {
         VarDecl vd = n.vl.get(i);
-        ctype.fields.put(vd.i.s, astToBase(vd.t));
+        if (ctype.fields.containsKey(vd.i.s)) {
+          System.err.printf("%s:%d: error: variable already exist", Info.file, vd.line_number);
+          System.err.printf("  symbol: variable %s\n", vd.i.s);
+          System.err.printf("  location:  class %s\n", Info.currentClass);
+        } else {
+          Type t = astToBase(vd.t);
+          table.putVariable(vd.i.s, t);
+          ctype.fields.put(vd.i.s, t);
+        }
       }
 
       len = n.ml.size();
       for (int i = 0; i < len; i++) {
         MethodDecl md = n.ml.get(i);
-        ctype.methods.put(md.i.s, methodDeclToSignature(md));
+        if (ctype.methods.containsKey(md.i.s)) {
+          System.err.printf("%s:%d: error: method already exist", Info.file, md.line_number);
+          System.err.printf("  symbol:  method %s\n", md.i.s);
+          System.err.printf("  location: class %s\n", Info.currentClass);
+        } else {
+          Signature s = methodDeclToSignature(md);
+          table.putMethod(md.i.s, s);
+          ctype.methods.put(md.i.s, s);
+        }
+
+        table = table.enterMethodScope(md.i.s);
+        md.accept(this);
+        table = table.exitScope();
       }
     }
     // else: unknown -> error is already printed form table.getClass();

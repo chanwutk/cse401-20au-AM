@@ -65,6 +65,18 @@ public class SymbolTable {
 		vars.put(id, new VariableInfo(type));
 	}
 
+	public boolean containsClass(String id) {
+		return classes.containsKey(id);
+	}
+
+	public boolean containsMethod(String id) {
+		return methods.containsKey(id);
+	}
+
+	public boolean containsVariable(String id) {
+		return vars.containsKey(id);
+	}
+
 	public SymbolTable enterClassScope(String id) {
 		ClassInfo info = classes.get(id);
 		return info.scope;
