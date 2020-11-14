@@ -16,11 +16,11 @@ import Symbols.SymbolTable;
 import Symbols.Type;
 import Info.Info;
 
-public class RegisterClassesVisitor implements Visitor {
+public class DeclarationVisitor implements Visitor {
 
   private SymbolTable table;
 
-  public RegisterClassesVisitor(SymbolTable table) {
+  public DeclarationVisitor(SymbolTable table) {
     this.table = table;
   }
 
@@ -86,10 +86,6 @@ public class RegisterClassesVisitor implements Visitor {
       } else {
         table.putClass(cs.i.s, new ClassType(cs.i.s, null));
       }
-
-      table = table.enterClassScope(cs.i.s);
-      cs.accept(this);
-      table = table.exitScope();
     });
 
     partition.get(false).stream().map(cd -> (ClassDeclExtends) cd).forEach(ce -> {
@@ -107,11 +103,8 @@ public class RegisterClassesVisitor implements Visitor {
         System.err.printf("  symbol:   class %s\n", ce.i.s);
         System.err.printf("  symbol:  parent %s\n", ce.j.s);
         System.err.printf("  location: class %s\n", Info.currentClass);
+        table.putClass(ce.i.s, new ClassType(ce.i.s, null));
       }
-
-      table = table.enterClassScope(ce.i.s);
-      ce.accept(this);
-      table = table.exitScope();
     });
 
     sorted_cl.forEach(cd -> cd.accept(this));
@@ -143,13 +136,15 @@ public class RegisterClassesVisitor implements Visitor {
   }
 
   private void visitClassDecl(ClassDecl n) {
+    table = table.enterClassScope(n.i.s);
+
     Type type = table.getClass(n.i);
     if (type instanceof ClassType) {
       ClassType ctype = (ClassType) type;
       int len = n.vl.size();
       for (int i = 0; i < len; i++) {
         VarDecl vd = n.vl.get(i);
-        if (ctype.fields.containsKey(vd.i.s)) {
+        if (table.containsVariable(vd.i.s)) {
           System.err.printf("%s:%d: error: variable already exist", Info.file, vd.line_number);
           System.err.printf("  symbol: variable %s\n", vd.i.s);
           System.err.printf("  location:  class %s\n", Info.currentClass);
@@ -163,7 +158,7 @@ public class RegisterClassesVisitor implements Visitor {
       len = n.ml.size();
       for (int i = 0; i < len; i++) {
         MethodDecl md = n.ml.get(i);
-        if (ctype.methods.containsKey(md.i.s)) {
+        if (table.containsMethod(md.i.s)) {
           System.err.printf("%s:%d: error: method already exist", Info.file, md.line_number);
           System.err.printf("  symbol:  method %s\n", md.i.s);
           System.err.printf("  location: class %s\n", Info.currentClass);
@@ -173,12 +168,12 @@ public class RegisterClassesVisitor implements Visitor {
           ctype.methods.put(md.i.s, s);
         }
 
-        table = table.enterMethodScope(md.i.s);
         md.accept(this);
-        table = table.exitScope();
       }
     }
     // else: unknown -> error is already printed form table.getClass();
+
+    table = table.exitScope();
   }
 
   public void visit(ClassDeclSimple n) {
@@ -189,8 +184,25 @@ public class RegisterClassesVisitor implements Visitor {
     visitClassDecl(n);
   }
 
+  public void visit(MethodDecl n) {
+    table = table.enterMethodScope(n.i.s);
+
+    int len = n.vl.size();
+    for (int i = 0; i < len; i++) {
+      VarDecl vd = n.vl.get(i);
+      if (table.containsVariable(vd.i.s)) {
+        System.err.printf("%s:%d: error: variable already exist", Info.file, vd.line_number);
+        System.err.printf("  symbol: variable %s\n", vd.i.s);
+        System.err.printf("  location:  class %s\n", Info.currentClass);
+      } else {
+        table.putVariable(vd.i.s, astToBase(vd.t));
+      }
+    }
+
+    table = table.exitScope();
+  }
+
   public void visit(VarDecl n) {}
-  public void visit(MethodDecl n) {}
   public void visit(Formal n) {}
   public void visit(IntArrayType n) {}
   public void visit(BooleanType n) {}
