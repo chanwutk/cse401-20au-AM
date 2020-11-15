@@ -1,7 +1,9 @@
 package AST.Visitor;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.util.List;
 
 import AST.*;
 import Symbols.BaseType;
@@ -17,6 +19,11 @@ public class TypecheckVisitor implements Visitor {
 
 	public TypecheckVisitor(SymbolTable symbols) {
 		this.symbols = symbols;
+	}
+
+	private Type acceptExp(Exp n) {
+		n.accept(this);
+		return types.get(n);
 	}
 
 	public void visit(Program n) {
@@ -51,6 +58,13 @@ public class TypecheckVisitor implements Visitor {
 	public void visit(MethodDecl n) {
 		symbols = symbols.enterMethodScope(n.i.s);
 		n.sl.stream().forEach(s -> s.accept(this));
+		Type rettype = acceptExp(n.e);
+		Signature signature = symbols.getMethod(n.i);
+		if (!rettype.subtypeOf(signature.ret)) {
+			Info.numErrors++;
+			System.err.printf("%s:%d: error: incompatible type: %s cannot be convered to %s\n", Info.file,
+					n.e.line_number, rettype, signature.ret);
+		}
 		symbols = symbols.exitScope();
 	}
 
@@ -69,8 +83,7 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(If n) {
-		n.e.accept(this);
-		Type condtype = types.get(n.e);
+		Type condtype = acceptExp(n.e);
 		if (condtype != BaseType.BOOLEAN) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: if condition: %s cannot be converted to boolean\n", Info.file,
@@ -82,8 +95,7 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(While n) {
-		n.e.accept(this);
-		Type condtype = types.get(n.e);
+		Type condtype = acceptExp(n.e);
 		if (condtype != BaseType.BOOLEAN) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: while-loop condition: %s cannot be converted to boolean\n", Info.file,
@@ -94,8 +106,7 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Print n) {
-		n.e.accept(this);
-		Type exptype = types.get(n.e);
+		Type exptype = acceptExp(n.e);
 		if (exptype != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: print: %s cannot be converted to int\n", Info.file,
@@ -104,9 +115,8 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Assign n) {
-		n.e.accept(this);
+		Type expType = acceptExp(n.e);
 		Type idType = symbols.getVariable(n.i);
-		Type expType = types.get(n.e);
 		if (!expType.subtypeOf(idType)) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible types: assign: %s cannot be converted to %s\n", Info.file,
@@ -115,24 +125,21 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(ArrayAssign n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
 		Type idtype = symbols.getVariable(n.i);
-		Type indextype = types.get(n.e1);
-		Type exptype = types.get(n.e2);
-
 		if (idtype != BaseType.ARRAY) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: array-assign: %s cannot be converted to int[]\n", Info.file,
 					n.i.line_number, idtype);
 		}
 
+		Type indextype = acceptExp(n.e1);
 		if (indextype != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: array-assign: %s cannot be converted to int\n", Info.file,
 					n.e1.line_number, indextype);
 		}
 
+		Type exptype = acceptExp(n.e2);
 		if (exptype != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: array-assign: %s cannot be converted to int\n", Info.file,
@@ -141,11 +148,8 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(And n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-
-		Type t1 = types.get(n.e1);
-		Type t2 = types.get(n.e2);
+		Type t1 = acceptExp(n.e1);
+		Type t2 = acceptExp(n.e2);
 		if (t1 != BaseType.BOOLEAN) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: expected `boolean && boolen` but found `%s && %s`\n", Info.file,
@@ -161,11 +165,8 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(LessThan n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-
-		Type t1 = types.get(n.e1);
-		Type t2 = types.get(n.e2);
+		Type t1 = acceptExp(n.e1);
+		Type t2 = acceptExp(n.e2);
 		if (t1 != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: expected `int < int` but found `%s < %s`\n", Info.file,
@@ -181,11 +182,8 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Plus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-
-		Type t1 = types.get(n.e1);
-		Type t2 = types.get(n.e2);
+		Type t1 = acceptExp(n.e1);
+		Type t2 = acceptExp(n.e2);
 		if (t1 != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: expected `int + int` but found `%s + %s`\n", Info.file,
@@ -201,11 +199,8 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Minus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-
-		Type t1 = types.get(n.e1);
-		Type t2 = types.get(n.e2);
+		Type t1 = acceptExp(n.e1);
+		Type t2 = acceptExp(n.e2);
 		if (t1 != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: expected `int - int` but found `%s - %s`\n", Info.file,
@@ -221,11 +216,8 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Times n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-
-		Type t1 = types.get(n.e1);
-		Type t2 = types.get(n.e2);
+		Type t1 = acceptExp(n.e1);
+		Type t2 = acceptExp(n.e2);
 		if (t1 != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: expected `int * int` but found `%s * %s`\n", Info.file,
@@ -241,17 +233,14 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(ArrayLookup n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-
-		Type arraytype = types.get(n.e1);
+		Type arraytype = acceptExp(n.e1);
 		if (arraytype != BaseType.ARRAY) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: array lookup: %s cannot be converted to int[]\n", Info.file,
 					n.e1.line_number, arraytype);
 		}
 
-		Type indextype = types.get(n.e2);
+		Type indextype = acceptExp(n.e2);
 		if (indextype != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: array lookup: %s cannot be converted to int\n", Info.file,
@@ -262,8 +251,7 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(ArrayLength n) {
-		n.e.accept(this);
-		Type arraytype = types.get(n.e);
+		Type arraytype = acceptExp(n.e);
 		if (arraytype != BaseType.ARRAY) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: array length: %s cannot be converted to int[]\n", Info.file,
@@ -274,21 +262,21 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Call n) {
-		n.e.accept(this);
-		n.el.stream().forEach(e -> e.accept(this));
-		n.i.accept(this);
-
-		Type itype = types.get(n.e);
-		if (itype instanceof ClassType) {
+		Type exptype = acceptExp(n.e);
+		if (exptype instanceof ClassType) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: method call on primitive: expecting a class type but received %s\n", Info.file,
-					n.e.line_number, itype.toString());
+					n.e.line_number, exptype.toString());
+			return;
 		}
-		ClassType objtype = (ClassType) itype;
+		ClassType objtype = (ClassType) exptype;
 		Signature signature = objtype.getMethod(n.i.s);
-		if (signature == null) return;
+		if (signature == null) {
+			types.put(n, BaseType.UNKNOWN);
+			return;
+		}
 
-		ExpList el = n.el;
+		List<Type> el = n.el.stream().map(e -> acceptExp(e)).collect(Collectors.toList());
 		if (signature.params.size() != el.size()) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incorrect number of parameter(s): %s expected %d parameter(s) but received %d parameter(s)\n", Info.file,
@@ -297,15 +285,16 @@ public class TypecheckVisitor implements Visitor {
 
 		int len = signature.params.size();
 		for (int i = 0; i < len; i++) {
-			Exp e = el.get(i);
-			Type ptype = types.get(e);
+			Type ptype = el.get(i);
 			Type stype = signature.params.get(i);
 			if (!ptype.subtypeOf(stype)) {
 				Info.numErrors++;
 				System.err.printf("%s:%d: error: incompatible type: array length: %s cannot be converted to %s\n", Info.file,
-						e.line_number, ptype, stype);
+						n.el.get(i).line_number, ptype, stype);
 			}
 		}
+
+		types.put(n, signature.ret);
 	}
 
 	public void visit(IntegerLiteral n) {
@@ -329,8 +318,7 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(NewArray n) {
-		n.e.accept(this);
-		Type indextype = types.get(n.e);
+		Type indextype = acceptExp(n.e);
 		if (indextype != BaseType.INT) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: new array: %s cannot be converted to int\n", Info.file,
@@ -344,8 +332,7 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(Not n) {
-		n.e.accept(this);
-		Type t = types.get(n.e);
+		Type t = acceptExp(n.e);
 		if (t != BaseType.BOOLEAN) {
 			Info.numErrors++;
 			System.err.printf("%s:%d: error: incompatible type: not (!): %s cannot be converted to boolean\n", Info.file,
