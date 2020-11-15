@@ -3,23 +3,28 @@ package Symbols;
 import java.util.Map;
 import java.util.HashMap;
 import AST.Identifier;
+import AST.IdentifierExp;
 import Info.Info;
 
 public class SymbolTable {
-	public Type getClass(Identifier id) {
-		ClassInfo info = classes.get(id.s);
+	public Type getClass(String s, int line_number) {
+		ClassInfo info = classes.get(s);
 		if (info != null) {
 			return info.type;
 		} else if (parent != null) {
-			return parent.getClass(id);
+			return parent.getClass(s, line_number);
 		} else {
-			System.err.printf("%s:%d: error: cannot find symbol", Info.file, id.line_number);
-			System.err.printf("  symbol:   class %s\n", id.s);
+			System.err.printf("%s:%d: error: cannot find symbol", Info.file, line_number);
+			System.err.printf("  symbol:   class %s\n", s);
 			System.err.printf("  location: class %s\n", Info.currentClass);
 			Info.numErrors++;
-			putClass(id.s, BaseType.UNKNOWN);
+			putClass(s, BaseType.UNKNOWN);
 			return BaseType.UNKNOWN;
 		}
+	}
+
+	public Type getClass(Identifier id) {
+		return getClass(id.s, id.line_number);
 	}
 
 	public Signature getMethod(Identifier id) {
@@ -37,20 +42,28 @@ public class SymbolTable {
 		}
 	}
 
-	public Type getVariable(Identifier id) {
-		VariableInfo info = vars.get(id.s);
+	private Type getVariable(String s, int line_number) {
+		VariableInfo info = vars.get(s);
 		if (info != null) {
 			return info.type;
 		} else if (parent != null) {
-			return parent.getVariable(id);
+			return parent.getVariable(s, line_number);
 		} else {
-			System.err.printf("%s:%d: error: cannot find symbol", Info.file, id.line_number);
-			System.err.printf("  symbol:   variable %s\n", id.s);
+			System.err.printf("%s:%d: error: cannot find symbol", Info.file, line_number);
+			System.err.printf("  symbol:   variable %s\n", s);
 			System.err.printf("  location: class %s\n", Info.currentClass);
 			Info.numErrors++;
-			putVariable(id.s, BaseType.UNKNOWN);
+			putVariable(s, BaseType.UNKNOWN);
 			return BaseType.UNKNOWN;
 		}
+	}
+
+	public Type getVariable(Identifier id) {
+		return getVariable(id.s, id.line_number);
+	}
+
+	public Type getVariable(IdentifierExp id) {
+		return getVariable(id.s, id.line_number);
 	}
 
 	public void putClass(String id, Type type) {
