@@ -1,6 +1,7 @@
 package AST;
 
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.ArrayList;
 import java_cup.runtime.ComplexSymbolFactory.Location;
 
@@ -22,5 +23,9 @@ public class ExpList extends ASTNode{
 
    public int size() { 
       return list.size(); 
+   }
+
+   public Stream<Exp> stream() {
+      return list.stream();
    }
 }
