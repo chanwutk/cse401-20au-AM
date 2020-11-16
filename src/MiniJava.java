@@ -8,6 +8,7 @@ import Info.Info;
 import java_cup.runtime.Symbol;
 import java_cup.runtime.ComplexSymbolFactory;
 import Scanner.scanner;
+import Symbols.SymbolTable;
 import Parser.parser;
 import Parser.sym;
 
@@ -21,7 +22,7 @@ public class MiniJava {
 		Set<String> flags = new TreeSet<String>();
 		for (int i = 0; i < args.length - 1; i++) {
 			String arg = args[i];
-			if ((!"-S".equals(arg) && !"-P".equals(arg) && !"-A".equals(arg)) || flags.contains(arg)) {
+			if ((!"-S".equals(arg) && !"-P".equals(arg) && !"-A".equals(arg) && !"-T".equals(arg)) || flags.contains(arg)) {
 				return null;
 			}
 			flags.add(arg);
@@ -34,7 +35,7 @@ public class MiniJava {
 	public static void main(String[] args) {
 		Set<String> flags = getFlags(args);
 		if (flags == null || args.length < 2) {
-			System.err.println("Usage: MiniJava [-S] [-A] [-P] <filename>");
+			System.err.println("Usage: MiniJava [-S] [-A] [-P] [-T] <filename>");
 			System.exit(1);
 		}
 
@@ -47,8 +48,13 @@ public class MiniJava {
 				error |= scan(file);
 			} else if ("-P".equals(flag)) {
 				error |= parse(file, new PrettyPrintVisitor());
-			} else {
+			} else if ("-A".equals(flag)) {
 				error |= parse(file, new ASTPrintVisitor());
+			} else {
+				SymbolTable symbols = new SymbolTable();
+				error |= parse(file, new DeclarationVisitor(symbols));
+				error |= parse(file, new TypecheckVisitor(symbols));
+				error |= Info.numErrors > 0;
 			}
 		}
 
