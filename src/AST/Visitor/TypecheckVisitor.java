@@ -34,9 +34,9 @@ public class TypecheckVisitor implements Visitor {
 	}
 
 	public void visit(MainClass n) {
-		symbols = symbols.enterClassScope(n.i1.s).enterMethodScope("main");
+		symbols = symbols.enterClassScope(n.i1.s);
 		n.s.accept(this);
-		symbols = symbols.exitScope().exitScope();
+		symbols = symbols.exitScope();
 	}
 
 	private void visitClassDecl(ClassDecl n) {
@@ -232,11 +232,12 @@ public class TypecheckVisitor implements Visitor {
 
 	public void visit(Call n) {
 		Type exptype = acceptExp(n.e);
-		if (exptype instanceof ClassType) {
+		if (!(exptype instanceof ClassType)) {
 			Info.numErrors++;
-			System.err.printf("%s:%d: error: method call on primitive: expecting a class type but received %s\n", Info.file,
+			System.err.printf("%s:%d: error: referencing non-class: expecting a class type but received %s\n", Info.file,
 					n.e.line_number, exptype.toString());
 			System.err.printf("  location: class %s\n", Info.currentClass);
+			types.put(n, BaseType.UNKNOWN);
 			return;
 		}
 		ClassType objtype = (ClassType) exptype;

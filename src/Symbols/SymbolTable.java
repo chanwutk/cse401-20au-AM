@@ -11,6 +11,8 @@ public class SymbolTable {
 		ClassInfo info = classes.get(s);
 		if (info != null) {
 			return info.type;
+		} else if (base != null) {
+			return base.getClass(s, line_number);
 		} else if (parent != null) {
 			return parent.getClass(s, line_number);
 		} else {
@@ -31,6 +33,8 @@ public class SymbolTable {
 		MethodInfo info = methods.get(id.s);
 		if (info != null) {
 			return info.signature;
+		} else if (base != null) {
+			return base.getMethod(id);
 		} else if (parent != null) {
 			return parent.getMethod(id);
 		} else {
@@ -46,6 +50,8 @@ public class SymbolTable {
 		VariableInfo info = vars.get(s);
 		if (info != null) {
 			return info.type;
+		} else if (base != null) {
+			return base.getVariable(s, line_number);
 		} else if (parent != null) {
 			return parent.getVariable(s, line_number);
 		} else {
@@ -67,7 +73,11 @@ public class SymbolTable {
 	}
 
 	public void putClass(String id, Type type) {
-		classes.put(id, new ClassInfo(type, this));
+		SymbolTable base = null;
+		if (type instanceof ClassType && ((ClassType) type).base != null) {
+			base = classes.get(((ClassType) type).base.name).scope;
+		}
+		classes.put(id, new ClassInfo(type, this, base));
 	}
 
 	public void putMethod(String id, Signature signature) {
@@ -92,6 +102,7 @@ public class SymbolTable {
 
 	public SymbolTable enterClassScope(String id) {
 		ClassInfo info = classes.get(id);
+		Info.currentClass = ((ClassType) info.type).name;
 		return info.scope;
 	}
 
@@ -109,20 +120,26 @@ public class SymbolTable {
 	}
 
 	private final SymbolTable parent;
+	private final SymbolTable base;
 	private final Map<String, ClassInfo> classes = new HashMap<>();
 	private final Map<String, MethodInfo> methods = new HashMap<>();
 	private final Map<String, VariableInfo> vars = new HashMap<>();
 
 	private SymbolTable(SymbolTable parent) {
+		this(parent, null);
+	}
+
+	private SymbolTable(SymbolTable parent, SymbolTable base) {
 		this.parent = parent;
+		this.base = base;
 	}
 
 	public static class ClassInfo {
 		final SymbolTable scope;
 		final Type type;
 
-		public ClassInfo(Type type, SymbolTable parent) {
-			this.scope = new SymbolTable(parent);
+		public ClassInfo(Type type, SymbolTable parent, SymbolTable base) {
+			this.scope = new SymbolTable(parent, base);
 			this.type = type;
 		}
 	}
@@ -132,7 +149,7 @@ public class SymbolTable {
 		final Signature signature;
 
 		public MethodInfo(Signature signature, SymbolTable parent) {
-			this.scope = new SymbolTable(parent);
+			this.scope = new SymbolTable(parent, parent.base);
 			this.signature = signature;
 		}
 	}

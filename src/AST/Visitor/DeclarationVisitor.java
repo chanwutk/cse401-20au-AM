@@ -31,28 +31,30 @@ public class DeclarationVisitor implements Visitor {
 
     cl.stream().forEach(cd -> {
       String name = cd.i.s;
-      namemap.put(name, cd);
+      if (!indegrees.containsKey(name)) indegrees.put(name, 0);
       if (!graph.containsKey(name)) graph.put(name, new ArrayList<>());
+      namemap.put(name, cd);
 
       if (cd instanceof ClassDeclExtends) {
         String base = ((ClassDeclExtends) cd).j.s;
         if (!indegrees.containsKey(base)) indegrees.put(base, 0);
-        if (!indegrees.containsKey(name)) indegrees.put(name, 0);
-        indegrees.put(name, indegrees.get(name) + 1);
-
         if (!graph.containsKey(base)) graph.put(base, new ArrayList<>());
+
+        indegrees.put(name, indegrees.get(name) + 1);
         graph.get(base).add(name);
       }
     });
 
     Queue<String> queue = new LinkedList<>();
+    List<ClassDecl> ret = new ArrayList<>();
     indegrees.forEach((name, indegree) -> {
       if (indegree != 0) {
         queue.add(name);
+      } else if (namemap.containsKey(name)) {
+        ret.add(namemap.get(name));
       }
     });
 
-    List<ClassDecl> ret = new ArrayList<>();
     while(!queue.isEmpty()) {
       String head = queue.remove();
       ret.add(namemap.get(head));
@@ -71,6 +73,9 @@ public class DeclarationVisitor implements Visitor {
   }
 
   public void visit(Program n) {
+    symbols.putClass(n.m.i1.s, new ClassType(n.m.i1.s));
+    n.m.accept(this);
+
     ClassDeclList cl = n.cl;
     List<ClassDecl> sorted_cl = toposort(cl);
     Map<Boolean, List<ClassDecl>> partition = sorted_cl.stream()
@@ -94,7 +99,7 @@ public class DeclarationVisitor implements Visitor {
           System.err.printf("%s:%d: error: class already exist", Info.file, ce.line_number);
           System.err.printf("  symbol:    class %s\n", ce.i.s);
           System.err.printf("  location:  class %s\n", Info.currentClass);
-        Info.numErrors++;
+          Info.numErrors++;
         } else {
           symbols.putClass(ce.i.s, new ClassType(ce.i.s, (ClassType) base));
         }
@@ -111,15 +116,21 @@ public class DeclarationVisitor implements Visitor {
     sorted_cl.forEach(cd -> cd.accept(this));
   }
 
-  public void visit(MainClass n) {}
+  public void visit(MainClass n) {
+    symbols = symbols.enterClassScope(n.i1.s);
+    n.s.accept(this);
+    symbols = symbols.exitScope();
+  }
 
-  private BaseType astToBase(AST.Type t) {
+  private Type astToBase(AST.Type t) {
     if (t instanceof BooleanType) {
       return BaseType.BOOLEAN;
     } else if (t instanceof IntegerType) {
       return BaseType.INT;
     } else if (t instanceof IntArrayType) {
       return BaseType.ARRAY;
+    } else if (t instanceof IdentifierType) {
+      return symbols.getClass(((IdentifierType) t).s, t.line_number);
     } else {
       return BaseType.UNKNOWN;
     }

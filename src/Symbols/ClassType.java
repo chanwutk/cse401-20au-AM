@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 public class ClassType implements Type {
 	public final String name;
-	public final ClassType base;
+	public ClassType base;
 	private final Map<String, Type> fields = new HashMap<>();
 	private final Map<String, Signature> methods = new HashMap<>();
 
