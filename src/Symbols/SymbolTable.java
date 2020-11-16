@@ -12,8 +12,11 @@ public class SymbolTable {
 		if (info != null) {
 			return info.type;
 		} else if (base != null) {
-			return base.getClass(s, line_number);
-		} else if (parent != null) {
+			Type ret = base.getClass(s, line_number);
+			if (ret instanceof ClassType) return ret;
+		}
+		
+		if (parent != null) {
 			return parent.getClass(s, line_number);
 		} else {
 			System.err.printf("%s:%d: error: cannot find symbol", Info.file, line_number);
@@ -34,8 +37,11 @@ public class SymbolTable {
 		if (info != null) {
 			return info.signature;
 		} else if (base != null) {
-			return base.getMethod(id);
-		} else if (parent != null) {
+			Signature ret = base.getMethod(id);
+			if (ret != null) return ret;
+		}
+		
+		if (parent != null) {
 			return parent.getMethod(id);
 		} else {
 			System.err.printf("%s:%d: error: cannot find symbol", Info.file, id.line_number);
@@ -51,8 +57,11 @@ public class SymbolTable {
 		if (info != null) {
 			return info.type;
 		} else if (base != null) {
-			return base.getVariable(s, line_number);
-		} else if (parent != null) {
+			Type ret = base.getVariable(s, line_number);
+			if (ret != null && ret != BaseType.UNKNOWN) return ret;
+		}
+		
+		if (parent != null) {
 			return parent.getVariable(s, line_number);
 		} else {
 			System.err.printf("%s:%d: error: cannot find symbol", Info.file, line_number);
@@ -165,7 +174,7 @@ public class SymbolTable {
 		final Signature signature;
 
 		public MethodInfo(Signature signature, SymbolTable parent) {
-			this.scope = new SymbolTable(parent, parent.base);
+			this.scope = new SymbolTable(parent);
 			this.signature = signature;
 		}
 	}
