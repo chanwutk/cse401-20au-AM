@@ -18,11 +18,11 @@ public class ClassType implements Type {
 		this.base = base;
 	}
 
-	public void setField(String name, Type type) {
+	public void putField(String name, Type type) {
 		fields.put(name, type);
 	}
 
-	public void setMethod(String name, Signature signature) {
+	public void putMethod(String name, Signature signature) {
 		methods.put(name, signature);
 	}
 

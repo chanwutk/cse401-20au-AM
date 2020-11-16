@@ -20,7 +20,7 @@ public class SymbolTable {
 			System.err.printf("  symbol:   class %s\n", s);
 			System.err.printf("  location: class %s\n", Info.currentClass);
 			Info.numErrors++;
-			putClass(s, BaseType.UNKNOWN);
+			putClass(s, line_number, BaseType.UNKNOWN);
 			return BaseType.UNKNOWN;
 		}
 	}
@@ -59,7 +59,7 @@ public class SymbolTable {
 			System.err.printf("  symbol:   variable %s\n", s);
 			System.err.printf("  location: class %s\n", Info.currentClass);
 			Info.numErrors++;
-			putVariable(s, BaseType.UNKNOWN);
+			putVariable(s, line_number, BaseType.UNKNOWN);
 			return BaseType.UNKNOWN;
 		}
 	}
@@ -72,7 +72,19 @@ public class SymbolTable {
 		return getVariable(id.s, id.line_number);
 	}
 
-	public void putClass(String id, Type type) {
+	public void putClass(Identifier id, Type type) {
+		putClass(id.s, id.line_number, type);
+	}
+
+	private void putClass(String id, int line_number, Type type) {
+		if (classes.containsKey(id)) {
+			System.err.printf("%s:%d: error: class already exist", Info.file, line_number);
+			System.err.printf("  symbol:    class %s\n", id);
+			System.err.printf("  location:  class %s\n", Info.currentClass);
+			Info.numErrors++;
+			return;
+		}
+
 		SymbolTable base = null;
 		if (type instanceof ClassType && ((ClassType) type).base != null) {
 			base = classes.get(((ClassType) type).base.name).scope;
@@ -80,24 +92,28 @@ public class SymbolTable {
 		classes.put(id, new ClassInfo(type, this, base));
 	}
 
-	public void putMethod(String id, Signature signature) {
-		methods.put(id, new MethodInfo(signature, this));
+	public void putMethod(Identifier id, Signature signature) {
+		if (methods.containsKey(id.s)) {
+			System.err.printf("%s:%d: error: method already exist", Info.file, id.line_number);
+			System.err.printf("  symbol:  method %s\n", id.s);
+			System.err.printf("  location: class %s\n", Info.currentClass);
+			Info.numErrors++;
+		}
+		methods.put(id.s, new MethodInfo(signature, this));
 	}
 
-	public void putVariable(String id, Type type) {
+	public void putVariable(Identifier id, Type type) {
+		putVariable(id.s, id.line_number, type);
+	}
+
+	private void putVariable(String id, int line_number, Type type) {
+		if (vars.containsKey(id)) {
+			System.err.printf("%s:%d: error: variable already exist", Info.file, line_number);
+			System.err.printf("  symbol: variable %s\n", id);
+			System.err.printf("  location:  class %s\n", Info.currentClass);
+			Info.numErrors++;
+		}
 		vars.put(id, new VariableInfo(type));
-	}
-
-	public boolean containsClass(String id) {
-		return classes.containsKey(id);
-	}
-
-	public boolean containsMethod(String id) {
-		return methods.containsKey(id);
-	}
-
-	public boolean containsVariable(String id) {
-		return vars.containsKey(id);
 	}
 
 	public SymbolTable enterClassScope(String id) {

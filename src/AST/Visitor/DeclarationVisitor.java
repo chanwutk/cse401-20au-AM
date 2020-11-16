@@ -73,7 +73,7 @@ public class DeclarationVisitor implements Visitor {
   }
 
   public void visit(Program n) {
-    symbols.putClass(n.m.i1.s, new ClassType(n.m.i1.s));
+    symbols.putClass(n.m.i1, new ClassType(n.m.i1.s));
     n.m.accept(this);
 
     ClassDeclList cl = n.cl;
@@ -81,37 +81,25 @@ public class DeclarationVisitor implements Visitor {
     Map<Boolean, List<ClassDecl>> partition = sorted_cl.stream()
       .collect(Collectors.partitioningBy(cd -> cd instanceof ClassDeclSimple));
     
-    partition.get(true).stream().map(cd -> (ClassDeclSimple) cd).forEach(cs -> {
-      if (symbols.containsClass(cs.i.s)) {
-        System.err.printf("%s:%d: error: class already exist", Info.file, cs.line_number);
-        System.err.printf("  symbol:    class %s\n", cs.i.s);
-        System.err.printf("  location:  class %s\n", Info.currentClass);
-        Info.numErrors++;
-      } else {
-        symbols.putClass(cs.i.s, new ClassType(cs.i.s));
-      }
-    });
+    partition.get(true).stream()
+      .map(cd -> (ClassDeclSimple) cd)
+      .forEach(cs -> symbols.putClass(cs.i, new ClassType(cs.i.s)));
 
-    partition.get(false).stream().map(cd -> (ClassDeclExtends) cd).forEach(ce -> {
-      Type base = symbols.getClass(ce.j);
-      if (base instanceof ClassType) {
-        if (symbols.containsClass(ce.i.s)) {
-          System.err.printf("%s:%d: error: class already exist", Info.file, ce.line_number);
-          System.err.printf("  symbol:    class %s\n", ce.i.s);
-          System.err.printf("  location:  class %s\n", Info.currentClass);
-          Info.numErrors++;
+    partition.get(false).stream()
+      .map(cd -> (ClassDeclExtends) cd)
+      .forEach(ce -> {
+        Type base = symbols.getClass(ce.j);
+        if (base instanceof ClassType) {
+          symbols.putClass(ce.i, new ClassType(ce.i.s, (ClassType) base));
         } else {
-          symbols.putClass(ce.i.s, new ClassType(ce.i.s, (ClassType) base));
+          System.err.printf("%s:%d: error: extending class does not exist", Info.file, ce.line_number);
+          System.err.printf("  symbol:   class %s\n", ce.i.s);
+          System.err.printf("  symbol:    base %s\n", ce.j.s);
+          System.err.printf("  location: class %s\n", Info.currentClass);
+          Info.numErrors++;
+          symbols.putClass(ce.i, new ClassType(ce.i.s));
         }
-      } else {
-        System.err.printf("%s:%d: error: extending class does not exist", Info.file, ce.line_number);
-        System.err.printf("  symbol:   class %s\n", ce.i.s);
-        System.err.printf("  symbol:  parent %s\n", ce.j.s);
-        System.err.printf("  location: class %s\n", Info.currentClass);
-        Info.numErrors++;
-        symbols.putClass(ce.i.s, new ClassType(ce.i.s));
-      }
-    });
+      });
 
     sorted_cl.forEach(cd -> cd.accept(this));
   }
@@ -151,30 +139,15 @@ public class DeclarationVisitor implements Visitor {
     if (type instanceof ClassType) {
       ClassType ctype = (ClassType) type;
       n.vl.stream().forEach(vd -> {
-        if (symbols.containsVariable(vd.i.s)) {
-          System.err.printf("%s:%d: error: variable already exist", Info.file, vd.line_number);
-          System.err.printf("  symbol: variable %s\n", vd.i.s);
-          System.err.printf("  location:  class %s\n", Info.currentClass);
-          Info.numErrors++;
-        } else {
-          Type t = astToBase(vd.t);
-          symbols.putVariable(vd.i.s, t);
-          ctype.setField(vd.i.s, t);
-        }
+        Type t = astToBase(vd.t);
+        symbols.putVariable(vd.i, t);
+        ctype.putField(vd.i.s, t);
       });
 
       n.ml.stream().forEach(md -> {
-        if (symbols.containsMethod(md.i.s)) {
-          System.err.printf("%s:%d: error: method already exist", Info.file, md.line_number);
-          System.err.printf("  symbol:  method %s\n", md.i.s);
-          System.err.printf("  location: class %s\n", Info.currentClass);
-          Info.numErrors++;
-        } else {
-          Signature s = methodDeclToSignature(md);
-          symbols.putMethod(md.i.s, s);
-          ctype.setMethod(md.i.s, s);
-        }
-
+        Signature s = methodDeclToSignature(md);
+        symbols.putMethod(md.i, s);
+        ctype.putMethod(md.i.s, s);
         md.accept(this);
       });
     }
@@ -193,29 +166,8 @@ public class DeclarationVisitor implements Visitor {
 
   public void visit(MethodDecl n) {
     symbols = symbols.enterMethodScope(n.i.s);
-    
-    n.fl.stream().forEach(f -> {
-      if (symbols.containsVariable(f.i.s)) {
-        System.err.printf("%s:%d: error: parameter already exist", Info.file, f.line_number);
-        System.err.printf("  symbol: parameter %s\n", f.i.s);
-        System.err.printf("  location:   class %s\n", Info.currentClass);
-        Info.numErrors++;
-      } else {
-        symbols.putVariable(f.i.s, astToBase(f.t));
-      }
-    });
-
-    n.vl.stream().forEach(vd -> {
-      if (symbols.containsVariable(vd.i.s)) {
-        System.err.printf("%s:%d: error: variable already exist", Info.file, vd.line_number);
-        System.err.printf("  symbol: variable %s\n", vd.i.s);
-        System.err.printf("  location:  class %s\n", Info.currentClass);
-        Info.numErrors++;
-      } else {
-        symbols.putVariable(vd.i.s, astToBase(vd.t));
-      }
-    });
-
+    n.fl.stream().forEach(f -> symbols.putVariable(f.i, astToBase(f.t)));
+    n.vl.stream().forEach(vd -> symbols.putVariable(vd.i, astToBase(vd.t)));
     symbols = symbols.exitScope();
   }
 
