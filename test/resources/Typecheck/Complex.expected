@@ -1,0 +1,12 @@
+CLASS C1
+    VAR f: int
+    VAR x: C2
+    METHOD f(int): int
+        VAR x: int
+        VAR y: C2
+CLASS Complex
+CLASS C2
+    VAR x: C1
+    METHOD f(int): int
+        VAR i: int
+        VAR y: C2

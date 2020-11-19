@@ -1,0 +1,10 @@
+NotFound.java:7: error: cannot find symbol
+  symbol:   class Y
+NotFound.java:3: error: cannot find symbol
+  symbol:   class X
+  location: class NotFound
+NotFound.java:9: error: cannot find symbol
+  symbol:   variable y
+  location: class C1
+NotFound.java:15: error: cannot find symbol
+  symbol:   method g(...)
