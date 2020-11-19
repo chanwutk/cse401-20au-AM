@@ -38,6 +38,11 @@ public class ClassType implements Type {
 	}
 
 	@Override
+	public String toString() {
+		return name;
+	}
+
+	@Override
 	public boolean subtypeOf(Type that) {
 		if (this == that || that == BaseType.UNKNOWN)
 			return true;

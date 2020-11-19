@@ -57,6 +57,8 @@ public class MiniJava {
 				if (Info.numErrors > 0) {
 					System.err.printf("%d error%s\n", Info.numErrors, Info.numErrors > 1 ? "s" : "");
 					error = true;
+				} else {
+					symbols.prettyPrint(System.out, 0);
 				}
 			}
 		}

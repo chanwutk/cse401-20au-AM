@@ -1,6 +1,9 @@
 package Symbols;
 
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.io.PrintStream;
 import java.util.HashMap;
 import AST.Identifier;
 import AST.IdentifierExp;
@@ -117,6 +120,47 @@ public class SymbolTable {
 
 	public static class SymbolException extends Exception {
 		private static final long serialVersionUID = 0;
+	}
+
+	public void prettyPrint(PrintStream out, int indent) {
+		Function<Integer, PrintStream> print = i -> {
+			for (int j = 0; j < i; j++)
+				out.print("    ");
+			return out;
+		};
+		// print vars
+		if (base != null)
+			base.vars.entrySet().stream().filter(e -> !vars.containsKey(e.getKey()))
+					.forEach(e -> print.apply(indent).printf("VAR %s: %s\n", e.getKey(), e.getValue().type));
+		vars.entrySet().stream()
+				.forEach(e -> print.apply(indent).printf("VAR %s: %s\n", e.getKey(), e.getValue().type));
+		// print classes
+		if (base != null)
+			base.classes.entrySet().stream().filter(e -> !classes.containsKey(e.getKey()))
+					.forEach(e -> {
+						print.apply(indent).printf("CLASS %s:\n", e.getKey());
+						e.getValue().scope.prettyPrint(out, indent + 1);
+					});
+		classes.entrySet().stream().forEach(e -> {
+			print.apply(indent).printf("CLASS %s\n", e.getKey());
+			e.getValue().scope.prettyPrint(out, indent + 1);
+		});
+		// print methods
+		if (base != null)
+			base.methods.entrySet().stream().filter(e -> !methods.containsKey(e.getKey())).forEach(e -> {
+				print.apply(indent).printf("METHOD %s(%s): %s\n", e.getKey(),
+						String.join(", ", e.getValue().signature.params.stream().map(f -> f.toString())
+								.collect(Collectors.toList())),
+						e.getValue().signature.ret);
+				e.getValue().scope.prettyPrint(out, indent + 1);
+			});
+		methods.entrySet().stream().forEach(e -> {
+			print.apply(indent).printf("METHOD %s(%s): %s\n", e.getKey(),
+					String.join(", ",
+							e.getValue().signature.params.stream().map(f -> f.toString()).collect(Collectors.toList())),
+					e.getValue().signature.ret);
+			e.getValue().scope.prettyPrint(out, indent + 1);
+		});
 	}
 
 	private final String name;
