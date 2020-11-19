@@ -1,0 +1,4 @@
+Changes in AST:
+	- We added `error` flag to ClassDecl, MethodDecl, Formal, VarDecl.
+	  The flag is set when an declaration causes errors and should be ignored
+	  by visitors.
