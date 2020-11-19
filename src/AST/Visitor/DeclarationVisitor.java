@@ -106,6 +106,7 @@ public class DeclarationVisitor extends AbstractVisitor {
         cd.error = true;
       } else {
         classes.put(cd.i.s, cd);
+        requiredBy.put(cd, new ArrayList<>());
       }
     });
 
@@ -121,13 +122,13 @@ public class DeclarationVisitor extends AbstractVisitor {
             ClassDeclSimple replacement = new ClassDeclSimple(cd.i, cd.vl, cd.ml, null);
             replacement.line_number = cd.line_number;
             cl.set(i, replacement);
-            requiredBy.put(replacement, new ArrayList<>());
+            requiredBy.put(replacement, requiredBy.get(cd));
+            requiredBy.remove(cd);
             resolved.add(replacement);
           } else {
             requiredBy.get(base).add(cd);
           }
         } else {
-          requiredBy.put(cd, new ArrayList<>());
           resolved.add(cd);
         }
       }
@@ -136,10 +137,7 @@ public class DeclarationVisitor extends AbstractVisitor {
     List<ClassDecl> ret = new ArrayList<>();
     while (!resolved.isEmpty()) {
       ClassDecl cd = resolved.remove();
-      requiredBy.get(cd).forEach(derived -> {
-        requiredBy.put(derived, new ArrayList<>());
-        resolved.add(derived);
-      });
+      requiredBy.get(cd).forEach(derived -> resolved.add(derived));
       ret.add(cd);
       requiredBy.remove(cd);
     }
