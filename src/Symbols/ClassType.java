@@ -1,12 +1,16 @@
 package Symbols;
 
 import java.util.Map;
+
+import AST.Identifier;
+
 import java.util.HashMap;
+import Info.Info;
 
 public class ClassType implements Type {
 	public final String name;
-	public ClassType base;
-	private final Map<String, Type> fields = new HashMap<>();
+	public final ClassType base;
+	// only methods, not fields, can be accessed by `x.y` dot natation
 	private final Map<String, Signature> methods = new HashMap<>();
 
 	public ClassType(String name) {
@@ -18,36 +22,19 @@ public class ClassType implements Type {
 		this.base = base;
 	}
 
-	public void putField(String name, Type type) {
-		fields.put(name, type);
-	}
-
 	public void putMethod(String name, Signature signature) {
 		methods.put(name, signature);
 	}
 
-	public Type getField(String name) {
-		if (fields.containsKey(name)) {
-			return fields.get(name);
+	public Signature getMethod(Identifier id) {
+		if (methods.containsKey(id.s)) {
+			return methods.get(id.s);
+		} else if (base != null) {
+			return base.getMethod(id);
+		} else {
+			Info.errorNoSymbol(id.line_number, "method", id.s + "(...)");
+			return null;
 		}
-		
-		if (base != null) {
-			return base.getField(name);
-		}
-
-		return null;
-	}
-
-	public Signature getMethod(String name) {
-		if (methods.containsKey(name)) {
-			return methods.get(name);
-		}
-		
-		if (base != null) {
-			return base.getMethod(name);
-		}
-
-		return null;
 	}
 
 	@Override

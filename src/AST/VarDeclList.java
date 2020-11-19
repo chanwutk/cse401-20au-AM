@@ -17,15 +17,15 @@ public class VarDeclList extends ASTNode {
       list.add(n);
    }
 
-   public VarDecl get(int i)  { 
-      return list.get(i); 
+   public VarDecl get(int i)  {
+      return list.get(i);
    }
 
-   public int size() { 
-      return list.size(); 
+   public int size() {
+      return list.size();
    }
 
    public Stream<VarDecl> stream() {
-      return list.stream();
+      return list.stream().filter(vd -> !vd.error);
    }
 }

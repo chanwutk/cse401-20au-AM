@@ -17,15 +17,15 @@ public class FormalList extends ASTNode {
       list.add(n);
    }
 
-   public Formal get(int i)  { 
-      return list.get(i); 
+   public Formal get(int i)  {
+      return list.get(i);
    }
 
-   public int size() { 
-      return list.size(); 
+   public int size() {
+      return list.size();
    }
 
    public Stream<Formal> stream() {
-      return list.stream();
+      return list.stream().filter(f -> !f.error);
    }
 }

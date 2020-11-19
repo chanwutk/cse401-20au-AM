@@ -1,4 +1,5 @@
 import java.io.FileReader;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.Set;
 
@@ -47,14 +48,16 @@ public class MiniJava {
 			if ("-S".equals(flag)) {
 				error |= scan(file);
 			} else if ("-P".equals(flag)) {
-				error |= parse(file, new PrettyPrintVisitor());
+				error |= parse(file, List.of(new PrettyPrintVisitor()));
 			} else if ("-A".equals(flag)) {
-				error |= parse(file, new ASTPrintVisitor());
+				error |= parse(file, List.of(new ASTPrintVisitor()));
 			} else {
 				SymbolTable symbols = new SymbolTable();
-				error |= parse(file, new DeclarationVisitor(symbols));
-				error |= parse(file, new TypecheckVisitor(symbols));
-				error |= Info.numErrors > 0;
+				error |= parse(file, List.of(new DeclarationVisitor(symbols), new TypecheckVisitor(symbols)));
+				if (Info.numErrors > 0) {
+					System.err.printf("%d error%s\n", Info.numErrors, Info.numErrors > 1 ? "s" : "");
+					error = true;
+				}
 			}
 		}
 
@@ -83,7 +86,7 @@ public class MiniJava {
 		return error;
 	}
 
-	private static boolean parse(String file, Visitor visitor) {
+	private static boolean parse(String file, List<Visitor> visitors) {
 		ComplexSymbolFactory sf = new ComplexSymbolFactory();
 		boolean error = false;
 
@@ -92,7 +95,7 @@ public class MiniJava {
 			parser p = new parser(s, sf);
 			Symbol root = p.parse();
 			Program program = (Program) root.value;
-			program.accept(visitor);
+			visitors.forEach(visitor -> program.accept(visitor));
 		} catch (Exception e) {
 			System.err.println("Unexpected internal compiler error: " + e.toString());
 			e.printStackTrace();

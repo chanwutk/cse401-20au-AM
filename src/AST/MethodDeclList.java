@@ -17,15 +17,15 @@ public class MethodDeclList extends ASTNode {
       list.add(n);
    }
 
-   public MethodDecl get(int i)  { 
-      return list.get(i); 
+   public MethodDecl get(int i)  {
+      return list.get(i);
    }
 
-   public int size() { 
-      return list.size(); 
+   public int size() {
+      return list.size();
    }
 
    public Stream<MethodDecl> stream() {
-      return list.stream();
+      return list.stream().filter(md -> !md.error);
    }
 }

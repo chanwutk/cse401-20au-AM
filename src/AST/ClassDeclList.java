@@ -17,15 +17,19 @@ public class ClassDeclList extends ASTNode{
       list.add(n);
    }
 
-   public ClassDecl get(int i)  { 
-      return list.get(i); 
+   public ClassDecl get(int i)  {
+      return list.get(i);
    }
 
-   public int size() { 
-      return list.size(); 
+   public void set(int i, ClassDecl n) {
+      list.set(i, n);
+   }
+
+   public int size() {
+      return list.size();
    }
 
    public Stream<ClassDecl> stream() {
-      return list.stream();
+      return list.stream().filter(cd -> !cd.error);
    }
 }
