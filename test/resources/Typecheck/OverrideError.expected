@@ -1,0 +1,4 @@
+OverrideError.java:15: error: incompatible types: int cannot be converted to Foo
+OverrideError.java:15: error: incompatible types: Foo cannot be converted to Foo2
+OverrideError.java:29: error: cannot override method with different number of parameters: expected 2 parameters, but received 3 parameters
+OverrideError.java:45: error: cannot override method with different number of parameters: expected 2 parameters, but received 3 parameters

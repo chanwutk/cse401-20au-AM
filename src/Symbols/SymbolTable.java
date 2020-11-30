@@ -5,11 +5,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.io.PrintStream;
 import java.util.HashMap;
+
 import AST.Identifier;
 import AST.IdentifierExp;
 import Info.Info;
 
 public class SymbolTable {
+	public SymbolTable base() {
+		return base;
+	}
+
 	public Type getClass(String s, int line_number) {
 		ClassInfo info = classes.get(s);
 		if (info == null && base != null)
@@ -30,12 +35,20 @@ public class SymbolTable {
 		return getClass(id.s, id.line_number);
 	}
 
+	public Signature getMethodIfExists(String id) {
+		if (methods.containsKey(id)) {
+			return methods.get(id).signature;
+		} else if (base != null) {
+			return base.getMethodIfExists(id);
+		} else {
+			return null;
+		}
+	}
+
 	public Signature getMethod(Identifier id) {
-		MethodInfo info = methods.get(id.s);
-		if (info == null && base != null)
-			info = base.methods.get(id.s);
-		if (info != null) {
-			return info.signature;
+		Signature signature = getMethodIfExists(id.s);
+		if (signature != null) {
+			return signature;
 		} else if (parent != null) {
 			return parent.getMethod(id);
 		} else {

@@ -1,5 +1,6 @@
 package AST.Visitor;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import AST.*;
@@ -23,9 +24,9 @@ public class TypecheckVisitor extends AbstractVisitor {
 		return expType;
 	}
 
-	private void check(int ln, Type expected, Type actual) {
-		if (!actual.subtypeOf(expected))
-			Info.errorIncompatibleTypes(ln, expected, actual);
+	private void check(int ln, Type supertype, Type subtype) {
+		if (!subtype.subtypeOf(supertype))
+			Info.errorIncompatibleTypes(ln, supertype, subtype);
 	}
 
 	private void check(int ln, String op, Type expected1, Type expected2, Type actual1, Type actual2) {
@@ -61,6 +62,22 @@ public class TypecheckVisitor extends AbstractVisitor {
 	public void visit(VarDecl n) {}
 
 	public void visit(MethodDecl n) {
+		SymbolTable base = symbols.base();
+		Signature _signature;
+		if (base != null && (_signature = base.getMethodIfExists(n.i.s)) != null) {
+			Signature signature = symbols.getMethodIfExists(n.i.s);
+			List<Type> _params = _signature.params;
+			List<Type> params = signature.params;
+			int len = params.size();
+			if (_params.size() != len) {
+				Info.errorNumberOfParametersWhenOverride(n.i.line_number, _params.size(), len);
+			} else {
+				check(n.i.line_number, _signature.ret, signature.ret);
+				for (int i = 0; i < len; i++) {
+					check(n.i.line_number, params.get(i), _params.get(i));
+				}
+			}
+		}
 		symbols = symbols.enterMethodScope(n.i.s);
 		n.sl.stream().forEach(s -> s.accept(this));
 		check(n.e.line_number, symbols.getMethod(n.i).ret, typeof(n.e));

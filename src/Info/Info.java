@@ -41,6 +41,11 @@ public class Info {
 		Info.numErrors++;
 	}
 
+	public static void errorNumberOfParametersWhenOverride(int ln, int expected, int actual) {
+		err.printf("%s:%d: error: cannot override method with different number of parameters: expected %d parameters, but received %d parameters\n", Info.file, ln, expected, actual);
+		Info.numErrors++;
+	}
+
 	public static void errorBadOperand(int ln, String op, Type actual1, Type actual2) {
 		err.printf("%s:%d: error: bad operand types for binary operator '%s'\n", Info.file, ln, op);
 		err.printf("  first type:  %s\n", actual1);
