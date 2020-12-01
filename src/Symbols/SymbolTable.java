@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 import AST.Identifier;
 import AST.IdentifierExp;
-import Info.Info;
+import IO.Error;
 
 public class SymbolTable {
 	public SymbolTable base() {
@@ -24,8 +24,8 @@ public class SymbolTable {
 		} else if (parent != null) {
 			return parent.getClass(s, line_number);
 		} else {
-			Info.errorNoSymbol(line_number, "class", s);
-			Info.reportLocation();
+			Error.errorNoSymbol(line_number, "class", s);
+			Error.reportLocation();
 			classes.put(s, new ClassInfo(BaseType.UNKNOWN, this, null));
 			return BaseType.UNKNOWN;
 		}
@@ -52,8 +52,8 @@ public class SymbolTable {
 		} else if (parent != null) {
 			return parent.getMethod(id);
 		} else {
-			Info.errorNoSymbol(id.line_number, "method", id.s);
-			Info.reportLocation();
+			Error.errorNoSymbol(id.line_number, "method", id.s);
+			Error.reportLocation();
 			return null;
 		}
 	}
@@ -67,8 +67,8 @@ public class SymbolTable {
 		} else if (parent != null) {
 			return parent.getVariable(s, line_number);
 		} else {
-			Info.errorNoSymbol(line_number, "variable", s);
-			Info.reportLocation();
+			Error.errorNoSymbol(line_number, "variable", s);
+			Error.reportLocation();
 			vars.put(s, new VariableInfo(BaseType.UNKNOWN));
 			return BaseType.UNKNOWN;
 		}
@@ -84,7 +84,7 @@ public class SymbolTable {
 
 	public void putClass(Identifier id, Type type) throws SymbolException {
 		if (classes.containsKey(id.s)) {
-			Info.errorDuplicateClass(id.line_number, id.s);
+			Error.errorDuplicateClass(id.line_number, id.s);
 			throw new SymbolException();
 		} else {
 			SymbolTable base = null;
@@ -96,7 +96,7 @@ public class SymbolTable {
 
 	public void putMethod(Identifier id, Signature signature) throws SymbolException {
 		if (methods.containsKey(id.s)) {
-			Info.errorAlreadyDefined(id.line_number, "method", id.s + "(...)", name);
+			Error.errorAlreadyDefined(id.line_number, "method", id.s + "(...)", name);
 			throw new SymbolException();
 		} else {
 			methods.put(id.s, new MethodInfo(signature, this));
@@ -105,7 +105,7 @@ public class SymbolTable {
 
 	public void putVariable(Identifier id, Type type) throws SymbolException {
 		if (vars.containsKey(id.s)) {
-			Info.errorAlreadyDefined(id.line_number, "variable", id.s, name);
+			Error.errorAlreadyDefined(id.line_number, "variable", id.s, name);
 			throw new SymbolException();
 		} else {
 			vars.put(id.s, new VariableInfo(type));
@@ -114,7 +114,7 @@ public class SymbolTable {
 
 	public SymbolTable enterClassScope(String id) {
 		ClassInfo info = classes.get(id);
-		Info.currentClass = ((ClassType) info.type).name;
+		Error.currentClass = ((ClassType) info.type).name;
 		return info.scope;
 	}
 

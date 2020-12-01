@@ -3,9 +3,9 @@ package Symbols;
 import java.util.Map;
 
 import AST.Identifier;
+import IO.Error;
 
 import java.util.HashMap;
-import Info.Info;
 
 public class ClassType implements Type {
 	public final String name;
@@ -32,7 +32,7 @@ public class ClassType implements Type {
 		} else if (base != null) {
 			return base.getMethod(id);
 		} else {
-			Info.errorNoSymbol(id.line_number, "method", id.s + "(...)");
+			Error.errorNoSymbol(id.line_number, "method", id.s + "(...)");
 			return null;
 		}
 	}

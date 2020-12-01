@@ -10,13 +10,13 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 
 import AST.*;
+import IO.Error;
 import Symbols.BaseType;
 import Symbols.ClassType;
 import Symbols.Signature;
 import Symbols.SymbolTable;
 import Symbols.Type;
 import Symbols.SymbolTable.SymbolException;
-import Info.Info;
 
 public class DeclarationVisitor extends AbstractVisitor {
 
@@ -102,7 +102,7 @@ public class DeclarationVisitor extends AbstractVisitor {
 
     cl.stream().forEach(cd -> {
       if (classes.containsKey(cd.i.s)) {
-        Info.errorDuplicateClass(cd.i.line_number, cd.i.s);
+        Error.errorDuplicateClass(cd.i.line_number, cd.i.s);
         cd.error = true;
       } else {
         classes.put(cd.i.s, cd);
@@ -118,7 +118,7 @@ public class DeclarationVisitor extends AbstractVisitor {
           ClassDeclExtends cde = ((ClassDeclExtends) cd);
           ClassDecl base = classes.get(cde.j.s);
           if (base == null) {
-            Info.errorNoSymbol(cd.line_number, "class", cde.j.s);
+            Error.errorNoSymbol(cd.line_number, "class", cde.j.s);
             ClassDeclSimple replacement = new ClassDeclSimple(cd.i, cd.vl, cd.ml, null);
             replacement.line_number = cd.line_number;
             cl.set(i, replacement);
@@ -146,7 +146,7 @@ public class DeclarationVisitor extends AbstractVisitor {
       // report cyclic inheritance in the source code order
       cl.stream().forEach(cd -> {
         if (requiredBy.containsKey(cd)) {
-          Info.errorCyclicInheritance(cd.line_number, cd.i.s);
+          Error.errorCyclicInheritance(cd.line_number, cd.i.s);
           resolved.add(cd);
           while (!resolved.isEmpty()) {
             ClassDecl r = resolved.remove();

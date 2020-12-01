@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import AST.*;
+import IO.Error;
 import Symbols.BaseType;
 import Symbols.ClassType;
 import Symbols.Signature;
 import Symbols.SymbolTable;
 import Symbols.Type;
-import Info.Info;
 
 public class TypecheckVisitor extends AbstractVisitor {
 	private SymbolTable symbols;
@@ -26,12 +26,12 @@ public class TypecheckVisitor extends AbstractVisitor {
 
 	private void check(int ln, Type supertype, Type subtype) {
 		if (!subtype.subtypeOf(supertype))
-			Info.errorIncompatibleTypes(ln, supertype, subtype);
+			Error.errorIncompatibleTypes(ln, supertype, subtype);
 	}
 
 	private void check(int ln, String op, Type expected1, Type expected2, Type actual1, Type actual2) {
 		if (!(actual1.subtypeOf(expected1) && actual2.subtypeOf(expected2)))
-			Info.errorBadOperand(ln, op, actual1, actual2);
+			Error.errorBadOperand(ln, op, actual1, actual2);
 	}
 
 	public void visit(Program n) {
@@ -70,7 +70,7 @@ public class TypecheckVisitor extends AbstractVisitor {
 			List<Type> params = signature.params;
 			int len = params.size();
 			if (_params.size() != len) {
-				Info.errorNumberOfParametersWhenOverride(n.i.line_number, _params.size(), len);
+				Error.errorNumberOfParametersWhenOverride(n.i.line_number, _params.size(), len);
 			} else {
 				check(n.i.line_number, _signature.ret, signature.ret);
 				for (int i = 0; i < len; i++) {
@@ -153,7 +153,7 @@ public class TypecheckVisitor extends AbstractVisitor {
 		Type argType = typeof(n.e);
 		if (!(argType instanceof ClassType)) {
 			if (argType != BaseType.UNKNOWN)
-				Info.errorNotDereferenceable(n.e.line_number, argType);
+				Error.errorNotDereferenceable(n.e.line_number, argType);
 			expType = BaseType.UNKNOWN;
 		} else {
 			ClassType objType = (ClassType) argType;
@@ -161,7 +161,7 @@ public class TypecheckVisitor extends AbstractVisitor {
 			if (signature == null) {
 				expType = BaseType.UNKNOWN;
 			} else if (signature.params.size() != n.el.size()) {
-				Info.errorMethodNotApplicable(n.el.line_number, objType.name, n.i.s, signature.params,
+				Error.errorMethodNotApplicable(n.el.line_number, objType.name, n.i.s, signature.params,
 						n.el.stream().map(this::typeof).collect(Collectors.toList()));
 				expType = BaseType.UNKNOWN;
 			} else {
@@ -189,7 +189,7 @@ public class TypecheckVisitor extends AbstractVisitor {
 	}
 
 	public void visit(This n) {
-		expType = symbols.getClass(Info.currentClass, n.line_number);
+		expType = symbols.getClass(Error.currentClass, n.line_number);
 	}
 
 	public void visit(NewArray n) {

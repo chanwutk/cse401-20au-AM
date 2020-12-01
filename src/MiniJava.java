@@ -5,7 +5,7 @@ import java.util.Set;
 
 import AST.Program;
 import AST.Visitor.*;
-import Info.Info;
+import IO.Error;
 import java_cup.runtime.Symbol;
 import java_cup.runtime.ComplexSymbolFactory;
 import Scanner.scanner;
@@ -41,7 +41,7 @@ public class MiniJava {
 		}
 
 		String file = args[args.length - 1];
-		Info.file = file;
+		Error.file = file;
 		boolean error = false;
 
 		for (String flag : flags) {
@@ -54,8 +54,8 @@ public class MiniJava {
 			} else {
 				SymbolTable symbols = new SymbolTable();
 				error |= parse(file, List.of(new DeclarationVisitor(symbols), new TypecheckVisitor(symbols)));
-				if (Info.numErrors > 0) {
-					System.err.printf("%d error%s\n", Info.numErrors, Info.numErrors > 1 ? "s" : "");
+				if (Error.numErrors > 0) {
+					System.err.printf("%d error%s\n", Error.numErrors, Error.numErrors > 1 ? "s" : "");
 					error = true;
 				} else {
 					symbols.prettyPrint(System.out, 0);

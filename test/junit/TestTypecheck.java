@@ -20,7 +20,7 @@ import org.junit.runners.Parameterized.Parameters;
 import AST.Program;
 import AST.Visitor.DeclarationVisitor;
 import AST.Visitor.TypecheckVisitor;
-import Info.Info;
+import IO.Error;
 import Symbols.SymbolTable;
 
 @RunWith(Parameterized.class)
@@ -71,14 +71,14 @@ public class TestTypecheck {
     @Test
     public void testScanner() {
         var out = new ByteArrayOutputStream();
-        Info.err = new PrintStream(out);
-        Info.file = name + ".java";
-        Info.numErrors = 0;
+        Error.err = new PrintStream(out);
+        Error.file = name + ".java";
+        Error.numErrors = 0;
         var symbols = new SymbolTable();
         ast.accept(new DeclarationVisitor(symbols));
         ast.accept(new TypecheckVisitor(symbols));
-        if (Info.numErrors == 0)
-            symbols.prettyPrint(Info.err, 0);
+        if (Error.numErrors == 0)
+            symbols.prettyPrint(Error.err, 0);
 		assertEquals(expected, out.toString());
     }
 }
