@@ -63,15 +63,22 @@ public class Asm {
 		out.printf("    ret\n");
 	}
 
-	public static void put(String arg) {
+	public static void put(String arg, boolean aligned) {
+		if (!aligned)
+			sub(lit(WS), rsp);
 		mov(arg, ARGS.get(0));
 		out.printf("    call put\n");
+		if (!aligned)
+			add(lit(WS), rsp);
 	}
 
-	public static void call(String method, List<String> args) {
-		boolean pad = args.size() > ARGS.size() && (args.size() - ARGS.size()) % 2 == 1;
-		if (pad)
+	public static void call(String method, List<String> args, boolean aligned) {
+		int numStackArgs = args.size() <= ARGS.size() ? 0 : args.size() - ARGS.size();
+		aligned ^= numStackArgs % 2 == 0;
+		if (!aligned) {
 			sub(lit(WS), rsp);
+			numStackArgs++;
+		}
 		for (int i = args.size() - 1; i >= 0; i--) {
 			if (i >= ARGS.size())
 				push(args.get(i));
@@ -79,13 +86,8 @@ public class Asm {
 				mov(args.get(i), ARGS.get(i));
 		}
 		out.printf("    call *%s\n", method);
-		if (args.size() > ARGS.size()) {
-			int num = args.size() - ARGS.size() + (pad ? 0 : 1);
-			add(lit(num * WS), rsp);
-		} else {
-			if (pad)
-				add(lit(WS), rsp);
-		}
+		if (numStackArgs > 0)
+			add(lit(numStackArgs * WS), rsp);
 	}
 
 	public static void add(String src, String dst) {

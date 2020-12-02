@@ -42,13 +42,13 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visit(MethodDecl n) {
 		Asm.label(Asm.method(currentClass, n.i.s));
-		int locals = n.vl.size();
-		if (locals % 2 == 0)
-			locals++;
-		Asm.sub(Asm.lit(locals * Asm.WS), Asm.rsp);
+		stack16Aligned = n.vl.size() % 2 == 1;
+		if (n.vl.size() > 0)
+			Asm.sub(Asm.lit(n.vl.size() * Asm.WS), Asm.rsp);
 		n.sl.stream().forEach(s -> s.accept(this));
 		n.e.accept(this);
-		Asm.add(Asm.lit(locals * Asm.WS), Asm.rsp);
+		if (n.vl.size() > 0)
+			Asm.add(Asm.lit(n.vl.size() * Asm.WS), Asm.rsp);
 		Asm.ret();
 	}
 
@@ -82,7 +82,7 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visit(Print n) {
 		n.e.accept(this);
-		Asm.put(Asm.rax);
+		Asm.put(Asm.rax, stack16Aligned);
 	}
 
 	public void visit(Assign n) {
@@ -163,4 +163,5 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	private SymbolTable symbols;
 	private String currentClass;
+	private boolean stack16Aligned;
 }
