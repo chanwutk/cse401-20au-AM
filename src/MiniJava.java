@@ -16,14 +16,15 @@ import Parser.sym;
 public class MiniJava {
 
 	private static Set<String> getFlags(String[] args) {
-		if (args.length < 2) {
+		if (args.length < 1) {
 			return null;
 		}
 
 		Set<String> flags = new TreeSet<String>();
 		for (int i = 0; i < args.length - 1; i++) {
 			String arg = args[i];
-			if ((!"-S".equals(arg) && !"-P".equals(arg) && !"-A".equals(arg) && !"-T".equals(arg)) || flags.contains(arg)) {
+			if ((!"-S".equals(arg) && !"-P".equals(arg) && !"-A".equals(arg) && !"-T".equals(arg))
+					|| flags.contains(arg)) {
 				return null;
 			}
 			flags.add(arg);
@@ -35,7 +36,7 @@ public class MiniJava {
 
 	public static void main(String[] args) {
 		Set<String> flags = getFlags(args);
-		if (flags == null || args.length < 2) {
+		if (flags == null) {
 			System.err.println("Usage: MiniJava [-S] [-A] [-P] [-T] <filename>");
 			System.exit(1);
 		}
@@ -44,21 +45,33 @@ public class MiniJava {
 		Error.file = file;
 		boolean error = false;
 
-		for (String flag : flags) {
-			if ("-S".equals(flag)) {
-				error |= scan(file);
-			} else if ("-P".equals(flag)) {
-				error |= parse(file, List.of(new PrettyPrintVisitor()));
-			} else if ("-A".equals(flag)) {
-				error |= parse(file, List.of(new ASTPrintVisitor()));
-			} else {
-				SymbolTable symbols = new SymbolTable();
-				error |= parse(file, List.of(new DeclarationVisitor(symbols), new TypecheckVisitor(symbols)));
-				if (Error.numErrors > 0) {
-					System.err.printf("%d error%s\n", Error.numErrors, Error.numErrors > 1 ? "s" : "");
-					error = true;
+		if (flags.isEmpty()) {
+			SymbolTable symbols = new SymbolTable();
+			error |= parse(file, List.of(new DeclarationVisitor(symbols), new TypecheckVisitor(symbols),
+					new VtableVisitor(symbols), new CodegenVisitor(symbols)));
+			if (Error.numErrors > 0) {
+				System.err.printf("%d error%s\n", Error.numErrors, Error.numErrors > 1 ? "s" : "");
+				error = true;
+			}
+		} else {
+			for (String flag : flags) {
+				if ("-S".equals(flag)) {
+					error |= scan(file);
+				} else if ("-P".equals(flag)) {
+					error |= parse(file, List.of(new PrettyPrintVisitor()));
+				} else if ("-A".equals(flag)) {
+					error |= parse(file, List.of(new ASTPrintVisitor()));
+				} else if ("-T".equals(flag)) {
+					SymbolTable symbols = new SymbolTable();
+					error |= parse(file, List.of(new DeclarationVisitor(symbols), new TypecheckVisitor(symbols)));
+					if (Error.numErrors > 0) {
+						System.err.printf("%d error%s\n", Error.numErrors, Error.numErrors > 1 ? "s" : "");
+						error = true;
+					} else {
+						symbols.prettyPrint(System.out, 0);
+					}
 				} else {
-					symbols.prettyPrint(System.out, 0);
+					assert false;
 				}
 			}
 		}

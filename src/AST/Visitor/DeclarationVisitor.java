@@ -28,9 +28,9 @@ public class DeclarationVisitor extends AbstractVisitor {
 
   public void visit(Program n) {
     n.m.accept(this);
-    List<ClassDecl> sorted = toposort(n.cl);
-    sorted.forEach(cd -> cd.accept(this));
-    sorted.forEach(cd -> {
+    n.cl.reset(toposort(n.cl));
+    n.cl.stream().forEach(cd -> cd.accept(this));
+    n.cl.stream().forEach(cd -> {
       ClassType type = (ClassType) symbols.getClass(cd.i);
       symbols = symbols.enterClassScope(cd.i.s);
       cd.vl.stream().forEach(vd -> vd.accept(this));

@@ -11,7 +11,11 @@ public class ClassType implements Type {
 	public final String name;
 	public final ClassType base;
 	// only methods, not fields, can be accessed by `x.y` dot natation
-	private final Map<String, Signature> methods = new HashMap<>();
+	public final Map<String, Signature> methods = new HashMap<>();
+
+	// used by codegen
+	public final Map<String, Integer> offset = new HashMap<>();
+	public int size;
 
 	public ClassType(String name) {
 		this(name, null);

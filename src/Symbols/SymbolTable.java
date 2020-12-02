@@ -3,6 +3,7 @@ package Symbols;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.io.PrintStream;
 import java.util.HashMap;
 
@@ -55,6 +56,18 @@ public class SymbolTable {
 			Error.errorNoSymbol(id.line_number, "method", id.s);
 			Error.reportLocation();
 			return null;
+		}
+	}
+
+	public VarLocation getVariableLocation(String s) {
+		VariableInfo info = vars.get(s);
+		if (info == null && base != null)
+			info = base.vars.get(s);
+		if (info != null) {
+			return info.location;
+		} else {
+			assert parent != null;
+			return parent.getVariableLocation(s);
 		}
 	}
 
@@ -135,6 +148,10 @@ public class SymbolTable {
 		private static final long serialVersionUID = 0;
 	}
 
+	public Stream<ClassType> allClasses() {
+		return classes.values().stream().map(ci -> (ClassType) ci.type);
+	}
+
 	public void prettyPrint(PrintStream out, int indent) {
 		Function<Integer, PrintStream> print = i -> {
 			for (int j = 0; j < i; j++)
@@ -149,11 +166,10 @@ public class SymbolTable {
 				.forEach(e -> print.apply(indent).printf("VAR %s: %s\n", e.getKey(), e.getValue().type));
 		// print classes
 		if (base != null)
-			base.classes.entrySet().stream().filter(e -> !classes.containsKey(e.getKey()))
-					.forEach(e -> {
-						print.apply(indent).printf("CLASS %s:\n", e.getKey());
-						e.getValue().scope.prettyPrint(out, indent + 1);
-					});
+			base.classes.entrySet().stream().filter(e -> !classes.containsKey(e.getKey())).forEach(e -> {
+				print.apply(indent).printf("CLASS %s:\n", e.getKey());
+				e.getValue().scope.prettyPrint(out, indent + 1);
+			});
 		classes.entrySet().stream().forEach(e -> {
 			print.apply(indent).printf("CLASS %s\n", e.getKey());
 			e.getValue().scope.prettyPrint(out, indent + 1);
@@ -161,10 +177,10 @@ public class SymbolTable {
 		// print methods
 		if (base != null)
 			base.methods.entrySet().stream().filter(e -> !methods.containsKey(e.getKey())).forEach(e -> {
-				print.apply(indent).printf("METHOD %s(%s): %s\n", e.getKey(),
-						String.join(", ", e.getValue().signature.params.stream().map(f -> f.toString())
-								.collect(Collectors.toList())),
-						e.getValue().signature.ret);
+				print.apply(indent)
+						.printf("METHOD %s(%s): %s\n", e.getKey(), String.join(", ", e.getValue().signature.params
+								.stream().map(f -> f.toString()).collect(Collectors.toList())),
+								e.getValue().signature.ret);
 				e.getValue().scope.prettyPrint(out, indent + 1);
 			});
 		methods.entrySet().stream().forEach(e -> {
@@ -214,8 +230,20 @@ public class SymbolTable {
 	private static class VariableInfo {
 		public final Type type;
 
+		// used by codegen
+		public final VarLocation location = new VarLocation();
+
 		public VariableInfo(Type type) {
 			this.type = type;
+		}
+	}
+
+	public static class VarLocation {
+		public int offset;
+		public Type type;
+
+		public static enum Type {
+			FIELD, LOCAL, ARG,
 		}
 	}
 }

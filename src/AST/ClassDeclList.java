@@ -29,6 +29,10 @@ public class ClassDeclList extends ASTNode{
       return list.size();
    }
 
+   public void reset(List<ClassDecl> cl) {
+      list = cl;
+   }
+
    public Stream<ClassDecl> stream() {
       return list.stream().filter(cd -> !cd.error);
    }
