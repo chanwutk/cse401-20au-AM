@@ -69,15 +69,32 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(Block n) {
-		assert false;
+		n.sl.stream().forEach(s -> s.accept(this));
 	}
 
 	public void visit(If n) {
-		assert false;
+		var elseBranch = newLabel();
+		var end = newLabel();
+		n.e.accept(this);
+		Asm.test(Asm.rax);
+		Asm.je(elseBranch);
+		n.s1.accept(this);
+		Asm.jmp(end);
+		Asm.label(elseBranch);
+		n.s2.accept(this);
+		Asm.label(end);
 	}
 
 	public void visit(While n) {
-		assert false;
+		var check = newLabel();
+		var loop = newLabel();
+		Asm.jmp(check);
+		Asm.label(loop);
+		n.s.accept(this);
+		Asm.label(check);
+		n.e.accept(this);
+		Asm.test(Asm.rax);
+		Asm.jne(loop);
 	}
 
 	public void visit(Print n) {
@@ -94,23 +111,40 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(And n) {
-		assert false;
+		var end = newLabel();
+		n.e1.accept(this);
+		Asm.test(Asm.rax);
+		Asm.je(end);
+		n.e2.accept(this);
+		Asm.label(end);
+	}
+
+	public void visitBinaryOp(Exp e1, Exp e2) {
+		e2.accept(this);
+		Asm.push(Asm.rax);
+		e1.accept(this);
+		Asm.pop(Asm.rdx);
 	}
 
 	public void visit(LessThan n) {
-		assert false;
+		visitBinaryOp(n.e1, n.e2);
+		Asm.cmp(Asm.rdx, Asm.rax);
+		Asm.setl(Asm.rax);
 	}
 
 	public void visit(Plus n) {
-		assert false;
+		visitBinaryOp(n.e1, n.e2);
+		Asm.add(Asm.rdx, Asm.rax);
 	}
 
 	public void visit(Minus n) {
-		assert false;
+		visitBinaryOp(n.e1, n.e2);
+		Asm.sub(Asm.rdx, Asm.rax);
 	}
 
 	public void visit(Times n) {
-		assert false;
+		visitBinaryOp(n.e1, n.e2);
+		Asm.imul(Asm.rdx, Asm.rax);
 	}
 
 	public void visit(ArrayLookup n) {
@@ -125,16 +159,20 @@ public class CodegenVisitor extends AbstractVisitor {
 		assert false;
 	}
 
+	public void visitLit(int lit) {
+		Asm.mov(Asm.lit(lit), Asm.rax);
+	}
+
 	public void visit(IntegerLiteral n) {
-		Asm.mov(Asm.lit(n.i), Asm.rax);
+		visitLit(n.i);
 	}
 
 	public void visit(True n) {
-		assert false;
+		visitLit(1);
 	}
 
 	public void visit(False n) {
-		assert false;
+		visitLit(0);
 	}
 
 	public void visit(IdentifierExp n) {
@@ -154,7 +192,9 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(Not n) {
-		assert false;
+		n.e.accept(this);
+		// A boolean true must be exactly 1
+		Asm.xor(Asm.lit(1), Asm.rax);
 	}
 
 	public void visit(Identifier n) {
@@ -162,6 +202,12 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	private SymbolTable symbols;
+	private int lastLabel = 0;
 	private String currentClass;
 	private boolean stack16Aligned;
+
+	private String newLabel() {
+		lastLabel++;
+		return "L" + lastLabel;
+	}
 }

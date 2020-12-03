@@ -59,6 +59,10 @@ public class Asm {
 		out.printf("    push %s\n", val);
 	}
 
+	public static void pop(String val) {
+		out.printf("    pop %s\n", val);
+	}
+
 	public static void ret() {
 		out.printf("    ret\n");
 	}
@@ -90,12 +94,44 @@ public class Asm {
 			add(lit(numStackArgs * WS), rsp);
 	}
 
+	public static void test(String val) {
+		out.printf("    test %s, %s\n", val, val);
+	}
+
+	public static void cmp(String val1, String val2) {
+		out.printf("    cmp %s, %s\n", val1, val2);
+	}
+
+	public static void jmp(String target) {
+		out.printf("    jmp %s\n", target);
+	}
+
+	public static void je(String target) {
+		out.printf("    je %s\n", target);
+	}
+
+	public static void jne(String target) {
+		out.printf("    jne %s\n", target);
+	}
+
+	public static void setl(String reg) {
+		out.printf("    setl %s\n", reg);
+	}
+
 	public static void add(String src, String dst) {
 		out.printf("    add %s, %s\n", src, dst);
 	}
 
 	public static void sub(String src, String dst) {
 		out.printf("    sub %s, %s\n", src, dst);
+	}
+
+	public static void imul(String src, String dst) {
+		out.printf("    imul %s, %s\n", src, dst);
+	}
+
+	public static void xor(String src, String dst) {
+		out.printf("    xor %s, %s\n", src, dst);
 	}
 
 	public static final List<String> ARGS = List.of(rdi, rsi, rdx, rcx, r8, r9);
