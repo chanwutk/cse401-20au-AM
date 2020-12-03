@@ -17,13 +17,15 @@ public class VtableVisitor extends AbstractVisitor {
 
 	public void visit(Program n) {
 		if (numErrors == 0) {
+			Asm.rodata();
+			Asm.label(Asm.ARRAYINDEXOUTOFBOUND_MSG);
+			Asm.fieldString("Exception: Index %d out of bounds for length %d\\n");
 			var vtables = new HashMap<ClassType, LinkedHashMap<String, String>>();
 			symbols.allClasses().forEach(cls -> putVtables(cls, vtables));
-			Asm.rodata();
 			vtables.entrySet().stream().forEach(e -> {
 				var cls = e.getKey();
 				Asm.label(Asm.vtable(cls.name));
-				Asm.field(cls.base == null ? Asm.lit(0) : Asm.vtable(cls.base.name));
+				Asm.field(cls.base == null ? "0" : Asm.vtable(cls.base.name));
 				e.getValue().values().forEach(m -> Asm.field(m));
 			});
 			n.cl.stream().forEach(cd -> cd.accept(this));

@@ -9,6 +9,7 @@ public class Asm {
 	/** word size */
 	public static final int WS = 8;
 
+	public static final String rip = "%rip";
 	public static final String rsp = "%rsp";
 	public static final String rbp = "%rbp";
 	public static final String rax = "%rax";
@@ -23,6 +24,10 @@ public class Asm {
 		return "$" + num;
 	}
 
+	public static String litLabel(String label) {
+		return label + "(%rip)";
+	}
+
 	public static String mem(String base, String index, int offset) {
 		String asm = base;
 		if (index != null)
@@ -34,7 +39,7 @@ public class Asm {
 	}
 
 	public static void rodata() {
-		out.println("    .rodata");
+		out.println("    .section .data.rel.ro");
 	}
 
 	public static String vtable(String c) {
@@ -49,6 +54,10 @@ public class Asm {
 		out.printf("    .quad %s\n", val);
 	}
 
+	public static void fieldString(String val) {
+		out.printf("    .string \"%s\"\n", val);
+	}
+
 	public static void text() {
 		out.println("    .text");
 		out.println("    .globl asm_main");
@@ -59,7 +68,11 @@ public class Asm {
 	}
 
 	public static void mov(String src, String dst) {
-		out.printf("    mov %s, %s\n", src, dst);
+		out.printf("    movq %s, %s\n", src, dst);
+	}
+
+	public static void lea(String src, String dst) {
+		out.printf("    lea %s, %s\n", src, dst);
 	}
 
 	public static void push(String val) {
@@ -78,8 +91,8 @@ public class Asm {
 		out.printf("    ret\n");
 	}
 
-	public static void put() {
-		out.printf("    call put\n");
+	public static void callc(String c) {
+		out.printf("    call %s\n", c);
 	}
 
 	public static void call(String method) {
@@ -107,7 +120,8 @@ public class Asm {
 	}
 
 	public static void setl(String reg) {
-		out.printf("    setl %s\n", reg);
+		out.printf("    setl %%al\n");
+		out.printf("    movzbq %%al, %s\n", reg);
 	}
 
 	public static void add(String src, String dst) {
@@ -136,4 +150,7 @@ public class Asm {
 	public static int numStackArgs(int numArgs) {
 		return numArgs < ARGS.size() ? 0 : numArgs - ARGS.size();
 	}
+
+	public static final String ARRAYINDEXOUTOFBOUND_MSG = ".$ArrayIndexOutOfBound$msg";
+	public static final String ARRAYINDEXOUTOFBOUND_HANDLER = ".$ArrayIndexOutOfBound$handler";
 }
