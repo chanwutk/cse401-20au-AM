@@ -19,7 +19,7 @@ public class TypecheckVisitor extends AbstractVisitor {
 		this.symbols = symbols;
 	}
 
-	private Type typeof(Exp n) {
+	public Type typeof(Exp n) {
 		n.accept(this);
 		return expType;
 	}

@@ -10,6 +10,7 @@ public class Asm {
 	public static final int WS = 8;
 
 	public static final String rsp = "%rsp";
+	public static final String rbp = "%rbp";
 	public static final String rax = "%rax";
 	public static final String rdi = "%rdi";
 	public static final String rsi = "%rsi";
@@ -22,8 +23,14 @@ public class Asm {
 		return "$" + num;
 	}
 
-	public static String mem(String base, String index, int scale, int offset) {
-		return offset + "(" + base + ", " + index + ", " + scale + ")";
+	public static String mem(String base, String index, int offset) {
+		String asm = base;
+		if (index != null)
+			asm = asm + ", " + index + ", " + WS;
+		asm = "(" + asm + ")";
+		if (offset != 0)
+			asm = (offset * WS) + asm;
+		return asm;
 	}
 
 	public static void rodata() {
@@ -63,35 +70,20 @@ public class Asm {
 		out.printf("    pop %s\n", val);
 	}
 
+	public static void leave() {
+		out.printf("    leave\n");
+	}
+
 	public static void ret() {
 		out.printf("    ret\n");
 	}
 
-	public static void put(String arg, boolean aligned) {
-		if (!aligned)
-			sub(lit(WS), rsp);
-		mov(arg, ARGS.get(0));
+	public static void put() {
 		out.printf("    call put\n");
-		if (!aligned)
-			add(lit(WS), rsp);
 	}
 
-	public static void call(String method, List<String> args, boolean aligned) {
-		int numStackArgs = args.size() <= ARGS.size() ? 0 : args.size() - ARGS.size();
-		aligned ^= numStackArgs % 2 == 0;
-		if (!aligned) {
-			sub(lit(WS), rsp);
-			numStackArgs++;
-		}
-		for (int i = args.size() - 1; i >= 0; i--) {
-			if (i >= ARGS.size())
-				push(args.get(i));
-			else
-				mov(args.get(i), ARGS.get(i));
-		}
+	public static void call(String method) {
 		out.printf("    call *%s\n", method);
-		if (numStackArgs > 0)
-			add(lit(numStackArgs * WS), rsp);
 	}
 
 	public static void test(String val) {
@@ -134,5 +126,14 @@ public class Asm {
 		out.printf("    xor %s, %s\n", src, dst);
 	}
 
-	public static final List<String> ARGS = List.of(rdi, rsi, rdx, rcx, r8, r9);
+	// rdi reserved for this
+	public static final List<String> ARGS = List.of(rsi, rdx, rcx, r8, r9);
+
+	public static int numRegArgs(int numArgs) {
+		return numArgs < ARGS.size() ? numArgs : ARGS.size();
+	}
+
+	public static int numStackArgs(int numArgs) {
+		return numArgs < ARGS.size() ? 0 : numArgs - ARGS.size();
+	}
 }

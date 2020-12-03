@@ -243,7 +243,7 @@ public class SymbolTable {
 		public Type type;
 
 		public static enum Type {
-			FIELD, LOCAL, ARG,
+			THIS, RBP
 		}
 	}
 }

@@ -2,13 +2,14 @@ package AST.Visitor;
 
 import AST.*;
 import IO.Asm;
+import Symbols.ClassType;
 import Symbols.SymbolTable;
 import static IO.Error.numErrors;
 
 public class CodegenVisitor extends AbstractVisitor {
-	public CodegenVisitor(SymbolTable symbols) {
+	public CodegenVisitor(SymbolTable symbols, TypecheckVisitor typecheck) {
 		this.symbols = symbols;
-		symbols.prettyPrint(System.out, 0);
+		this.typecheck = typecheck;
 	}
 
 	public void visit(Program n) {
@@ -21,6 +22,7 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visit(MainClass n) {
 		Asm.label("asm_main");
+		numStackAllocated = 0;
 		n.s.accept(this);
 		Asm.ret();
 	}
@@ -42,13 +44,17 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visit(MethodDecl n) {
 		Asm.label(Asm.method(currentClass, n.i.s));
-		stack16Aligned = n.vl.size() % 2 == 1;
-		if (n.vl.size() > 0)
-			Asm.sub(Asm.lit(n.vl.size() * Asm.WS), Asm.rsp);
+		Asm.push(Asm.rbp);
+		Asm.mov(Asm.rsp, Asm.rbp);
+		int numRegArgs = Asm.numRegArgs(n.fl.size());
+		numStackAllocated = 1 + numRegArgs + n.vl.size();
+		Asm.sub(Asm.lit(numStackAllocated * Asm.WS), Asm.rsp);
+		Asm.mov(Asm.rdi, Asm.mem(Asm.rbp, null, -1));
+		for (int i = 0; i < numRegArgs; i++)
+			Asm.mov(Asm.ARGS.get(i), Asm.mem(Asm.rbp, null, -2 - i));
 		n.sl.stream().forEach(s -> s.accept(this));
 		n.e.accept(this);
-		if (n.vl.size() > 0)
-			Asm.add(Asm.lit(n.vl.size() * Asm.WS), Asm.rsp);
+		Asm.leave();
 		Asm.ret();
 	}
 
@@ -99,7 +105,13 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visit(Print n) {
 		n.e.accept(this);
-		Asm.put(Asm.rax, stack16Aligned);
+		boolean pad = numStackAllocated % 2 != 0;
+		if (pad)
+			push(null);
+		Asm.mov(Asm.rax, Asm.rdi);
+		Asm.put();
+		if (pad)
+			pop(null);
 	}
 
 	public void visit(Assign n) {
@@ -121,9 +133,9 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visitBinaryOp(Exp e1, Exp e2) {
 		e2.accept(this);
-		Asm.push(Asm.rax);
+		push(Asm.rax);
 		e1.accept(this);
-		Asm.pop(Asm.rdx);
+		pop(Asm.rdx);
 	}
 
 	public void visit(LessThan n) {
@@ -156,7 +168,23 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(Call n) {
-		assert false;
+		int numArgs = n.el.size();
+		boolean pad = numStackAllocated + Asm.numStackArgs(numArgs) % 2 != 0;
+		if (pad)
+			push(null);
+		for (int i = n.el.size() - 1; i >= 0; i--) {
+			n.el.get(i).accept(this);
+			push(Asm.rax);
+		}
+		n.e.accept(this);
+		Asm.mov(Asm.rax, Asm.rdi);
+		for (int i = 0; i < Asm.numRegArgs(n.el.size()); i++) {
+			pop(Asm.ARGS.get(i));
+		}
+		assert numStackAllocated % 2 == 0;
+		var t = (ClassType) typecheck.typeof(n.e);
+		Asm.call(Asm.mem(Asm.rdi, null, t.offset.get(n.i.s)));
+		Asm.add(Asm.lit(Asm.numStackArgs(numArgs) + (pad ? 1 : 0)), Asm.rsp);
 	}
 
 	public void visitLit(int lit) {
@@ -202,12 +230,29 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	private SymbolTable symbols;
+	private TypecheckVisitor typecheck;
 	private int lastLabel = 0;
 	private String currentClass;
-	private boolean stack16Aligned;
+	private int numStackAllocated;
 
 	private String newLabel() {
 		lastLabel++;
 		return "L" + lastLabel;
+	}
+
+	private void push(String reg) {
+		if (reg == null)
+			Asm.sub(Asm.lit(Asm.WS), Asm.rsp);
+		else
+			Asm.push(reg);
+		numStackAllocated++;
+	}
+
+	private void pop(String reg) {
+		if (reg == null)
+			Asm.add(Asm.lit(Asm.WS), Asm.rsp);
+		else
+			Asm.pop(reg);
+		numStackAllocated--;
 	}
 }

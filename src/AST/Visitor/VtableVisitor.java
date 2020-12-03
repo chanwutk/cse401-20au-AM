@@ -33,11 +33,14 @@ public class VtableVisitor extends AbstractVisitor {
 	private void visitClassDecl(ClassDecl n) {
 		ClassType t = (ClassType) symbols.getClass(n.i);
 		// At least vtable
-		int baseSize = t.base == null ? Asm.WS : t.base.size;
-		t.size = n.vl.size() * Asm.WS + baseSize;
+		int baseSize = t.base == null ? 1 : t.base.size;
+		t.size = n.vl.size() + baseSize;
 		symbols = symbols.enterClassScope(n.i.s);
-		resetLocation(Type.FIELD, baseSize);
-		n.vl.stream().forEach(vd -> vd.accept(this));
+		resetLocation(Type.THIS, baseSize);
+		n.vl.stream().forEach(vd -> {
+			vd.accept(this);
+			offset++;
+		});
 		n.ml.stream().forEach(md -> md.accept(this));
 		symbols = symbols.exitScope();
 	}
@@ -52,10 +55,29 @@ public class VtableVisitor extends AbstractVisitor {
 
 	public void visit(MethodDecl n) {
 		symbols = symbols.enterMethodScope(n.i.s);
-		resetLocation(Type.ARG, -Asm.ARGS.size() * Asm.WS);
-		n.fl.stream().forEach(f -> f.accept(this));
-		resetLocation(Type.LOCAL, 0);
-		n.vl.stream().forEach(vd -> vd.accept(this));
+		int numRegArgs = Asm.numRegArgs(n.fl.size());
+
+		// register arguments
+		resetLocation(Type.RBP, -2); // rdi
+		for (int i = 0; i < numRegArgs; i++) {
+			n.fl.get(i).accept(this);
+			offset--;
+		}
+
+		// stack arguments
+		resetLocation(Type.RBP, 2); // saved rbp and ret addr
+		for (int i = numRegArgs; i < n.fl.size(); i++) {
+			n.fl.get(i).accept(this);
+			offset++;
+		}
+
+		// locals
+		resetLocation(Type.RBP, -2 - numRegArgs);
+		n.vl.stream().forEach(vd -> {
+			vd.accept(this);
+			offset--;
+		});
+
 		symbols = symbols.exitScope();
 	}
 
@@ -63,7 +85,6 @@ public class VtableVisitor extends AbstractVisitor {
 		var loc = symbols.getVariableLocation(v);
 		loc.offset = offset;
 		loc.type = type;
-		offset += Asm.WS;
 	}
 
 	public void visit(VarDecl n) {
@@ -92,11 +113,12 @@ public class VtableVisitor extends AbstractVisitor {
 			} else {
 				vtable = new LinkedHashMap<>();
 			}
-			int offset = Asm.WS;
+			// at least super pointer
+			int offset = 1;
 			for (var m : cls.methods.keySet()) {
 				vtable.put(m, Asm.method(cls.name, m));
 				cls.offset.put(m, offset);
-				offset += Asm.WS;
+				offset++;
 			}
 			vtables.put(cls, vtable);
 		}

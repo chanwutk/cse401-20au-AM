@@ -47,8 +47,11 @@ public class MiniJava {
 
 		if (flags.isEmpty()) {
 			SymbolTable symbols = new SymbolTable();
-			error |= parse(file, List.of(new DeclarationVisitor(symbols), new TypecheckVisitor(symbols),
-					new VtableVisitor(symbols), new CodegenVisitor(symbols)));
+			var dv = new DeclarationVisitor(symbols);
+			var tv = new TypecheckVisitor(symbols);
+			var vv = new VtableVisitor(symbols);
+			var cv = new CodegenVisitor(symbols, tv);
+			error |= parse(file, List.of(dv, tv, vv, cv));
 			if (Error.numErrors > 0) {
 				System.err.printf("%d error%s\n", Error.numErrors, Error.numErrors > 1 ? "s" : "");
 				error = true;
