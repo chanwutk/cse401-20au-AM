@@ -15,10 +15,12 @@ public class CodegenVisitor extends AbstractVisitor {
 		if (Error.numErrors == 0) {
 			Asm.text();
 			Asm.label(Asm.ARRAYINDEXOUTOFBOUND_HANDLER);
+			Asm.and(Asm.lit(-1-0xf), Asm.rsp); // 0x ffffffff fffffff0
 			Asm.lea(Asm.litLabel(Asm.ARRAYINDEXOUTOFBOUND_MSG), Asm.rdi);
-			// TODO prepare args
+			Asm.mov(Asm.mem(Asm.rax, null, -1), Asm.rsi);
 			Asm.callc("printf");
 			Asm.callc("abort");
+
 			n.m.accept(this);
 			n.cl.stream().forEach(cd -> cd.accept(this));
 		}
@@ -63,22 +65,6 @@ public class CodegenVisitor extends AbstractVisitor {
 		symbols = symbols.exitScope();
 	}
 
-	public void visit(IntArrayType n) {
-		assert false;
-	}
-
-	public void visit(BooleanType n) {
-		assert false;
-	}
-
-	public void visit(IntegerType n) {
-		assert false;
-	}
-
-	public void visit(IdentifierType n) {
-		assert false;
-	}
-
 	public void visit(Block n) {
 		n.sl.stream().forEach(s -> s.accept(this));
 	}
@@ -114,6 +100,7 @@ public class CodegenVisitor extends AbstractVisitor {
 		if (pad)
 			push(null);
 		Asm.mov(Asm.rax, Asm.rdi);
+		assert numStackAllocated % 2 == 0;
 		Asm.callc("put");
 		if (pad)
 			pop(null);
@@ -121,11 +108,15 @@ public class CodegenVisitor extends AbstractVisitor {
 
 	public void visit(Assign n) {
 		n.e.accept(this);
-		Asm.mov(Asm.rax, location(n.i.s));
+		Asm.mov(Asm.rax, location(n.i.s, Asm.rdx));
 	}
 
 	public void visit(ArrayAssign n) {
-		assert false;
+		visitBinaryOp(n.e1, n.e2);
+		Asm.mov(location(n.i.s, Asm.rcx), Asm.rdi);
+		Asm.cmp(Asm.mem(Asm.rdi, null, -1), Asm.rax);
+		Asm.jge(Asm.ARRAYINDEXOUTOFBOUND_HANDLER);
+		Asm.mov(Asm.rdx, Asm.mem(Asm.rdi, Asm.rax, 0));
 	}
 
 	public void visit(And n) {
@@ -147,7 +138,8 @@ public class CodegenVisitor extends AbstractVisitor {
 	public void visit(LessThan n) {
 		visitBinaryOp(n.e1, n.e2);
 		Asm.cmp(Asm.rdx, Asm.rax);
-		Asm.setl(Asm.rax);
+		Asm.setl(Asm.al);
+		Asm.movzbq(Asm.al, Asm.rax);
 	}
 
 	public void visit(Plus n) {
@@ -166,11 +158,15 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(ArrayLookup n) {
-		assert false;
+		visitBinaryOp(n.e1, n.e2);
+		Asm.cmp(Asm.mem(Asm.rax, null, -1), Asm.rdx);
+		Asm.jge(Asm.ARRAYINDEXOUTOFBOUND_HANDLER);
+		Asm.mov(Asm.mem(Asm.rax, Asm.rdx, 0), Asm.rax);
 	}
 
 	public void visit(ArrayLength n) {
-		assert false;
+		n.e.accept(this);
+		Asm.mov(Asm.mem(Asm.rax, null, -1), Asm.rax);
 	}
 
 	public void visit(Call n) {
@@ -187,9 +183,9 @@ public class CodegenVisitor extends AbstractVisitor {
 		for (int i = 0; i < Asm.numRegArgs(n.el.size()); i++) {
 			pop(Asm.ARGS.get(i));
 		}
-		assert numStackAllocated % 2 == 0;
 		var t = (ClassType) new TypecheckVisitor(symbols).typeof(n.e);
 		Asm.mov(Asm.mem(Asm.rdi, null, 0), Asm.rax);
+		assert numStackAllocated % 2 == 0;
 		Asm.call(Asm.mem(Asm.rax, null, t.offset.get(n.i.s)));
 		int numCleanup = Asm.numStackArgs(numArgs) + (pad ? 1 : 0);
 		if (numCleanup > 0)
@@ -213,7 +209,7 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(IdentifierExp n) {
-		Asm.mov(location(n.s), Asm.rax);
+		Asm.mov(location(n.s, Asm.rdx), Asm.rax);
 	}
 
 	public void visit(This n) {
@@ -221,7 +217,19 @@ public class CodegenVisitor extends AbstractVisitor {
 	}
 
 	public void visit(NewArray n) {
-		assert false;
+		n.e.accept(this);
+		push(Asm.rax);
+		boolean pad = numStackAllocated % 2 != 0;
+		if (pad)
+			push(null);
+		Asm.lea(Asm.mem("", Asm.rax, 1), Asm.rdi);
+		assert numStackAllocated % 2 == 0;
+		Asm.callc("mjcalloc");
+		if (pad)
+			pop(null);
+		pop(Asm.rdx);
+		Asm.mov(Asm.rdx, Asm.mem(Asm.rax, null, 0));
+		Asm.add(Asm.lit(Asm.WS), Asm.rax);
 	}
 
 	public void visit(NewObject n) {
@@ -230,6 +238,7 @@ public class CodegenVisitor extends AbstractVisitor {
 		if (pad)
 			push(null);
 		Asm.mov(Asm.lit(t.size * Asm.WS), Asm.rdi);
+		assert numStackAllocated % 2 == 0;
 		Asm.callc("mjcalloc");
 		if (pad)
 			pop(null);
@@ -240,7 +249,7 @@ public class CodegenVisitor extends AbstractVisitor {
 	public void visit(Not n) {
 		n.e.accept(this);
 		// A boolean true must be exactly 1
-		Asm.xor(Asm.lit(1), Asm.rax);
+		Asm.xor(Asm.lit(1), Asm.al);
 	}
 
 	private SymbolTable symbols;
@@ -268,12 +277,12 @@ public class CodegenVisitor extends AbstractVisitor {
 		numStackAllocated--;
 	}
 
-	public String location(String v) {
+	public String location(String v, String regTemp) {
 		var loc = symbols.getVariableLocation(v);
 		switch (loc.type) {
 			case THIS:
-				Asm.mov(Asm.mem(Asm.rbp, null, -1), Asm.rdi);
-				return Asm.mem(Asm.rdi, null, loc.offset);
+				Asm.mov(Asm.mem(Asm.rbp, null, -1), regTemp);
+				return Asm.mem(regTemp, null, loc.offset);
 			case RBP:
 				return Asm.mem(Asm.rbp, null, loc.offset);
 			default:

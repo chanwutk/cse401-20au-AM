@@ -12,6 +12,7 @@ public class Asm {
 	public static final String rip = "%rip";
 	public static final String rsp = "%rsp";
 	public static final String rbp = "%rbp";
+	public static final String al = "%al";
 	public static final String rax = "%rax";
 	public static final String rdi = "%rdi";
 	public static final String rsi = "%rsi";
@@ -119,9 +120,16 @@ public class Asm {
 		out.printf("    jne %s\n", target);
 	}
 
+	public static void jge(String target) {
+		out.printf("    jge %s\n", target);
+	}
+
 	public static void setl(String reg) {
-		out.printf("    setl %%al\n");
-		out.printf("    movzbq %%al, %s\n", reg);
+		out.printf("    setl %s\n", reg);
+	}
+
+	public static void movzbq(String src, String dst) {
+		out.printf("    movzbq %s, %s\n", src, dst);
 	}
 
 	public static void add(String src, String dst) {
@@ -134,6 +142,10 @@ public class Asm {
 
 	public static void imul(String src, String dst) {
 		out.printf("    imul %s, %s\n", src, dst);
+	}
+
+	public static void and(String src, String dst) {
+		out.printf("    and %s, %s\n", src, dst);
 	}
 
 	public static void xor(String src, String dst) {
