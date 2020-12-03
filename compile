@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [[ $# -lt 1 ]]
+then
+	exit 1
+fi
+
+src="$1"
+shift
+
+java -ea MiniJava "$src" | gcc 'src/runtime/boot.c' -x assembler - "$@"
