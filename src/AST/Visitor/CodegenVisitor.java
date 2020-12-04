@@ -19,7 +19,8 @@ public class CodegenVisitor extends AbstractVisitor {
 			Asm.lea(Asm.litLabel(Asm.ARRAYINDEXOUTOFBOUND_MSG), Asm.rdi);
 			Asm.mov(Asm.mem(Asm.rax, null, -1), Asm.rsi);
 			Asm.callc("printf");
-			Asm.callc("abort");
+			Asm.mov(Asm.lit(1), Asm.rdi);
+			Asm.callc("exit");
 
 			n.m.accept(this);
 			n.cl.stream().forEach(cd -> cd.accept(this));

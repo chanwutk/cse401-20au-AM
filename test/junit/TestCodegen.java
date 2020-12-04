@@ -29,13 +29,15 @@ import Symbols.SymbolTable;
 
 @RunWith(Parameterized.class)
 public class TestCodegen {
+    public static final String RUNTIME_PREFIX = "__runtime_";
     public static final String RUNTIME_LOCATION = "src/runtime/";
     public static final String RUNTIME_BOOT = "boot.c";
     public static final String ASM_EXTENSION = ".s";
 
-    public static final String TEST_FILES_LOCATION = "test/resources/CodeGen/";
+    public static final String TEST_FILES_LOCATION = "test/resources/Codegen/";
     public static final String TEST_FILES_INPUT_EXTENSION = ".java";
     public static final String TEST_FILES_EXPECTED_EXTENSION = ".expected";
+    public static final String TEST_FILES_CLASS_EXTENSION = ".class";
 
     @Parameter(0)
     public String name;
@@ -85,29 +87,30 @@ public class TestCodegen {
     }
 
     public static String minijavaRunCommand(String path) {
-        return "./" + path;
+        return path;
     }
 
     public static String javaRunCommand(String path) {
-        return "java " + path;
+        return "java -cp " + TEST_FILES_LOCATION + " " + path;
     }
 
-    public static String execute(String command, int error) throws IOException, InterruptedException {
+    public static List<String> execute(String command, int error) throws IOException, InterruptedException {
         var process = Runtime.getRuntime().exec(command);
-        var br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String ret = "";
+        var brOut = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String out = "";
         String line;
-        while ((line = br.readLine()) != null) {
-            ret += line + "\n";
+        while ((line = brOut.readLine()) != null) {
+            out += line + "\n";
         }
-        var br2 = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        while ((line = br2.readLine()) != null) {
-            System.out.println(line);
+        var brErr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        String err = "";
+        while ((line = brErr.readLine()) != null) {
+            err += line + "\n";
         }
         process.waitFor();
-        // assertEquals(error, process.exitValue());
+        assertEquals(error, process.exitValue());
         process.destroy();
-        return ret;
+        return List.of(out, err);
     }
 
     @Test
@@ -118,7 +121,7 @@ public class TestCodegen {
         Error.numErrors = 0;
 
         var out = new ByteArrayOutputStream();
-        Asm.out = new PrintStream(System.out);
+        Asm.out = new PrintStream(out);
 
         var symbols = new SymbolTable();
         ast.accept(new DeclarationVisitor(symbols));
@@ -129,34 +132,36 @@ public class TestCodegen {
         if (Error.numErrors == 0)
             symbols.prettyPrint(Error.err, 0);
         
-        var execName = "__" + name;
+        var execName = RUNTIME_PREFIX + name;
         var asmName = execName + ASM_EXTENSION;
         var execPath = RUNTIME_LOCATION + execName;
         var asmPath = RUNTIME_LOCATION + asmName;
-        var execJavaPath = TEST_FILES_LOCATION + name;
-        var javaPath = execJavaPath + TEST_FILES_INPUT_EXTENSION;
+        var javaPath = TEST_FILES_LOCATION + name + TEST_FILES_INPUT_EXTENSION;
 
-        FileWriter asmFile = null;
         try {
             Files.deleteIfExists(Path.of(asmName));
             Files.deleteIfExists(Path.of(execName));
 
             (new File(asmPath)).createNewFile();
-            asmFile = new FileWriter(asmPath);
+            FileWriter asmFile = new FileWriter(asmPath);
             asmFile.write(out.toString());
+            asmFile.close();
 
-            var minijavaBuild = execute(minijavaBuildCommand(execName, asmPath), 0);
-            System.out.println(minijavaBuild);
-            assertEquals("", minijavaBuild);
+            var minijavaBuild = execute(minijavaBuildCommand(execPath, asmPath), 0);
+            assertEquals("", minijavaBuild.get(0));
+            assertEquals("", minijavaBuild.get(1));
             var minijavaRun = execute(minijavaRunCommand(execPath), expected == null ? 0 : 1);
             
             if (expected == null) {
                 var javaBuild = execute(javaBuildComman(javaPath), 0);
-                assertEquals("", javaBuild);
-                var javaRun = execute(javaRunCommand(execJavaPath), 0);
-                assertEquals(javaRun, minijavaRun);
+                assertEquals("", javaBuild.get(0));
+                assertEquals("", javaBuild.get(1));
+                var javaRun = execute(javaRunCommand(name), 0);
+                assertEquals(javaRun.get(0), minijavaRun.get(0));
+                assertEquals(javaRun.get(1), minijavaRun.get(1));
             } else {
-                assertEquals(expected, minijavaRun);
+                assertEquals(expected, minijavaRun.get(0));
+                assertEquals("", minijavaRun.get(1));
             }
         } catch (IOException e) {
             System.err.println("io error");
@@ -165,11 +170,16 @@ public class TestCodegen {
             System.err.println("interrupted");
             e.printStackTrace();
         } finally {
-            try {
-                asmFile.close();
-            } catch (IOException e) {
-                System.err.println("cannot close file");
-                e.printStackTrace();
+            File testLocation = new File(TEST_FILES_LOCATION);
+            File[] classes = testLocation.listFiles((dir, name) -> name.endsWith(TEST_FILES_CLASS_EXTENSION));
+            for (File _class : classes) {
+                _class.delete();
+            }
+
+            File runtimeLocation = new File(RUNTIME_LOCATION);
+            File[] tmps = runtimeLocation.listFiles((dir, name) -> name.startsWith(RUNTIME_PREFIX));
+            for (File tmp : tmps) {
+                tmp.delete();
             }
         }
     }
