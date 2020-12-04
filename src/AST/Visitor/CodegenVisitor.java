@@ -190,7 +190,7 @@ public class CodegenVisitor extends AbstractVisitor {
 		Asm.call(Asm.mem(Asm.rax, null, t.offset.get(n.i.s)));
 		int numCleanup = Asm.numStackArgs(numArgs) + (pad ? 1 : 0);
 		if (numCleanup > 0)
-			Asm.add(Asm.lit(numCleanup), Asm.rsp);
+			Asm.add(Asm.lit(numCleanup * Asm.WS), Asm.rsp);
 	}
 
 	public void visitLit(int lit) {

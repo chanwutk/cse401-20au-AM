@@ -170,6 +170,7 @@ public class TestCodegen {
             System.err.println("interrupted");
             e.printStackTrace();
         } finally {
+            // clean up all the tmp files
             File testLocation = new File(TEST_FILES_LOCATION);
             File[] classes = testLocation.listFiles((dir, name) -> name.endsWith(TEST_FILES_CLASS_EXTENSION));
             for (File _class : classes) {
