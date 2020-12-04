@@ -69,7 +69,7 @@ public class TestTypecheck {
     }
 
     @Test
-    public void testScanner() {
+    public void testTypecheck() {
         var out = new ByteArrayOutputStream();
         Error.err = new PrintStream(out);
         Error.file = name + ".java";
