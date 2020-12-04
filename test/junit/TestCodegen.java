@@ -82,7 +82,7 @@ public class TestCodegen {
         return "gcc -o " + execPath + " " + asmPath + " " + RUNTIME_LOCATION + RUNTIME_BOOT;
     }
 
-    public static String javaBuildComman(String path) {
+    public static String javaBuildCommand(String path) {
         return "javac " + path;
     }
 
@@ -153,7 +153,7 @@ public class TestCodegen {
             var minijavaRun = execute(minijavaRunCommand(execPath), expected == null ? 0 : 1);
             
             if (expected == null) {
-                var javaBuild = execute(javaBuildComman(javaPath), 0);
+                var javaBuild = execute(javaBuildCommand(javaPath), 0);
                 assertEquals("", javaBuild.get(0));
                 assertEquals("", javaBuild.get(1));
                 var javaRun = execute(javaRunCommand(name), 0);
