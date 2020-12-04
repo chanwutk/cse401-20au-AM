@@ -1,0 +1,10 @@
+How much is working:
+  Everything in MiniJava, including methods with arbitrary number of parameters.
+
+Changes in symbol table:
+  - We added method vtable offset into class information
+  - We added variable locations into variable info, which include offsets
+    and where the offset is based on (`this` or `%rbp`).
+
+Other interesting things:
+  When array index out of bound, we print an error message and call C `abort()`.
