@@ -14,7 +14,7 @@ import java_cup.runtime.*;
 /* Terminals (lexical tokens returned by the scanner): */
 
 /* reserved words */
-terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE, WHILE, RETURN;
+terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE, WHILE, RETURN, TRY, CATCH, EXCEPTION;
 
 /* built-in types */
 terminal BOOLEAN, INT;
@@ -183,6 +183,9 @@ Statement ::=
     :} |
     WHILE:w LPAREN Expression:cond RPAREN Statement:body {:
         RESULT = new While(cond, body, wxleft);
+    :} |
+    TRY:t LBRACKET StatementList:stmts1 RBRACKET CATCH LPAREN EXCEPTION Identifier:id RPAREN LBRACKET StatementList:stmts2 RBRACKET {:
+        RESULT = new TryCatch(stmts1, id, stmts2, txleft);
     :} |
     PRINT:p LPAREN Expression:expr RPAREN SEMICOLON {:
         RESULT = new Print(expr, pxleft);

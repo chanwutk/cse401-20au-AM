@@ -15,6 +15,12 @@ class Base {
 
 class Derived extends Base {
 	public int f(Base b) {
-		return this.f(this);
+		int ret;
+		try {
+			ret = this.f(this);
+		} catch (Exception e) {
+			ret = 0;
+		}
+		return ret;
 	}
 }

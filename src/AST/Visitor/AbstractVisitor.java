@@ -55,6 +55,10 @@ public class AbstractVisitor implements Visitor {
     assert false;
   }
 
+  public void visit(TryCatch n) {
+    assert false;
+  }
+
   public void visit(While n) {
     assert false;
   }

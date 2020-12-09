@@ -16,6 +16,7 @@ public interface Visitor {
   public void visit(IdentifierType n);
   public void visit(Block n);
   public void visit(If n);
+  public void visit(TryCatch n);
   public void visit(While n);
   public void visit(Print n);
   public void visit(Assign n);

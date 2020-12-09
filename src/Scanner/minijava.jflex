@@ -131,6 +131,9 @@ white = {eol}|[ \t]
 "else" { return symbol(sym.ELSE); }
 "while" { return symbol(sym.WHILE); }
 "return" { return symbol(sym.RETURN); }
+"try" { return symbol(sym.TRY); }
+"catch" { return symbol(sym.CATCH); }
+"Exception" { return symbol(sym.EXCEPTION); }
 
 "boolean" { return symbol(sym.BOOLEAN); }
 "int" { return symbol(sym.INT); }

@@ -125,6 +125,10 @@ public class TestParser {
 					},
 					new IdentifierExp("y", null)),
 			});
+		var s1 = new StatementList(null);
+		s1.add(new Assign(new Identifier("ret", null), call(new This(null), "f", new Exp[]{new This(null)}), null));
+		var s2 = new StatementList(null);
+		s2.add(new Assign(new Identifier("ret", null), new IntegerLiteral(0, null), null));
 		var derived = classDecl(
 			"Derived",
 			"Base",
@@ -139,9 +143,9 @@ public class TestParser {
 							id("b"),
 							null),
 					},
-					new VarDecl[]{},
-					new Statement[]{},
-					call(new This(null), "f", new Exp[]{new This(null)})),
+					new VarDecl[]{new VarDecl(new IntegerType(null), id("ret"), null)},
+					new Statement[]{new TryCatch(s1, new Identifier("e", null), s2, null)},
+					new IdentifierExp("ret", null)),
 			});
 		assertAST(program(main, new ClassDecl[]{base, derived}));
 	}
