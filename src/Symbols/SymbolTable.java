@@ -71,6 +71,38 @@ public class SymbolTable {
 		}
 	}
 
+	public String getVariableDeclaration(String s) {
+		VariableInfo info = vars.get(s);
+		if (info != null) {
+			return name;
+		}
+		if (base != null) {
+			info = base.vars.get(s);
+			if (info != null) {
+				return base.name;
+			}
+		}
+		if (parent != null) {
+			return parent.getVariableDeclaration(s);
+		} else {
+			return null;
+		}
+	}
+
+	public boolean hasVariable(String s) {
+		VariableInfo info = vars.get(s);
+		if (info == null && base != null) {
+			info = base.vars.get(s);
+		}
+		if (info != null) {
+			return true;
+		} else if (parent != null) {
+			return parent.hasVariable(s);
+		} else {
+			return false;
+		}
+	}
+
 	private Type getVariable(String s, int line_number) {
 		VariableInfo info = vars.get(s);
 		if (info == null && base != null)

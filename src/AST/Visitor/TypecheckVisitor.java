@@ -88,6 +88,15 @@ public class TypecheckVisitor extends AbstractVisitor {
 		n.sl.stream().forEach(s -> s.accept(this));
 	}
 
+	public void visit(TryCatch n) {
+		n.s1.stream().forEach(s -> s.accept(this));
+		String decl = symbols.getVariableDeclaration(n.i.s);
+		if (decl != null) {
+			Error.errorAlreadyDefined(n.i.line_number, "Exception", n.i.s, decl);
+		}
+		n.s1.stream().forEach(s -> s.accept(this));
+	}
+
 	public void visit(If n) {
 		check(n.e.line_number, BaseType.BOOLEAN, typeof(n.e));
 		n.s1.accept(this);

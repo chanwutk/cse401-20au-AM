@@ -18,7 +18,9 @@ class C2 {
 	C1 x;
 	public int f(int i) {
 		C2 y;
-		y = x;
+		try {
+			y = x;
+		} catch (Exception e) {}
 		return x.f(i);
 	}
 }

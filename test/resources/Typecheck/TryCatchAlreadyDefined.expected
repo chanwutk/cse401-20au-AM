@@ -1,0 +1,2 @@
+TryCatchAlreadyDefined.java:13: error: Exception a is already defined in classC1
+TryCatchAlreadyDefined.java:18: error: Exception b is already defined in method run(...)

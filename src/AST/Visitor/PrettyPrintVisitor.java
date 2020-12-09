@@ -214,7 +214,6 @@ public class PrettyPrintVisitor implements Visitor {
     System.out.println("try {");
     inc_indent_level();
     n.s1.stream().forEach(s -> {
-      indent();
       s.accept(this);
       System.out.println();
     });
@@ -224,8 +223,7 @@ public class PrettyPrintVisitor implements Visitor {
     n.i.accept(this);
     System.out.println(") {");
     inc_indent_level();
-    n.s1.stream().forEach(s -> {
-      indent();
+    n.s2.stream().forEach(s -> {
       s.accept(this);
       System.out.println();
     });
