@@ -10,12 +10,12 @@ class C1 {
     int b;
     try {
 
-    } catch (Exception a) {
+    } catch (RuntimeException a) {
       a = 0;
     }
 
     try {}
-    catch (Exception b) {
+    catch (RuntimeException b) {
       b = 0;
     }
     return b;

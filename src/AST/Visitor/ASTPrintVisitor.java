@@ -94,7 +94,11 @@ public class ASTPrintVisitor implements Visitor {
   // VarDeclList vl;
   // MethodDeclList ml;
   public void visit(ClassDeclSimple n) {
-    indent(); name(n); space(); n.i.accept(this); space(); line(n);
+    indent(); name(n); space(); n.i.accept(this);
+    if (n.ex) {
+      print(" extends RuntimeException");
+    }
+    space(); line(n);
     inc_indent_level();
       for (int i = 0; i < n.vl.size(); i++) {
         n.vl.get(i).accept(this); ln();
@@ -201,7 +205,7 @@ public class ASTPrintVisitor implements Visitor {
       inc_indent_level();
         n.s1.stream().forEach(s -> s.accept(this)); ln();
       dec_indent_level();
-      indent(); print("catch: "); n.i.accept(this);
+      indent(); print("catch: "); n.f.accept(this);
       inc_indent_level();
         n.s2.stream().forEach(s -> s.accept(this)); ln();
       dec_indent_level();
@@ -240,6 +244,16 @@ public class ASTPrintVisitor implements Visitor {
       indent(); print("do:");
       inc_indent_level();
         n.s.accept(this); ln();
+      dec_indent_level();
+    dec_indent_level();
+  }
+
+  public void visit(Throw n) {
+    indent(); name(n); space(); line(n);
+    inc_indent_level();
+      indent(); print("expr");
+      inc_indent_level();
+        n.e.accept(this); ln();
       dec_indent_level();
     dec_indent_level();
   }

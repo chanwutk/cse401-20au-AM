@@ -133,8 +133,9 @@ white = {eol}|[ \t]
 "return" { return symbol(sym.RETURN); }
 "try" { return symbol(sym.TRY); }
 "catch" { return symbol(sym.CATCH); }
-"Exception" { return symbol(sym.EXCEPTION); }
+"throw" { return symbol(sym.THROW); }
 
+"RuntimeException" { return symbol(sym.RUNTIME_EXCEPTION); }
 "boolean" { return symbol(sym.BOOLEAN); }
 "int" { return symbol(sym.INT); }
 

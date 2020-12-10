@@ -63,6 +63,10 @@ public class AbstractVisitor implements Visitor {
     assert false;
   }
 
+  public void visit(Throw n) {
+    assert false;
+  }
+
   public void visit(Print n) {
     assert false;
   }

@@ -98,6 +98,7 @@ public class TestParser {
 			null);
 		var base = classDecl(
 			"Base",
+			false,
 			new VarDecl[]{
 				new VarDecl(new IntegerType(null), id("x"), null),
 			},
@@ -144,7 +145,7 @@ public class TestParser {
 							null),
 					},
 					new VarDecl[]{new VarDecl(new IntegerType(null), id("ret"), null)},
-					new Statement[]{new TryCatch(s1, new Identifier("e", null), s2, null)},
+					new Statement[]{new TryCatch(s1, new Formal(new IdentifierType("RuntimeException", null), id("e"), null), s2, null)},
 					new IdentifierExp("ret", null)),
 			});
 		assertAST(program(main, new ClassDecl[]{base, derived}));
@@ -178,14 +179,14 @@ public class TestParser {
 		return new Call(object, id(method), params, null);
 	}
 
-	private static ClassDeclSimple classDecl(String name, VarDecl[] fields, MethodDecl[] methods) {
+	private static ClassDeclSimple classDecl(String name, boolean throwable, VarDecl[] fields, MethodDecl[] methods) {
 		var fieldList = new VarDeclList(null);
 		for (var f : fields)
 			fieldList.add(f);
 		var methodList = new MethodDeclList(null);
 		for (var m : methods)
 			methodList.add(m);
-		return new ClassDeclSimple(id(name), fieldList, methodList, null);
+		return new ClassDeclSimple(id(name), throwable, fieldList, methodList, null);
 	}
 
 	private static ClassDeclExtends classDecl(String name, String base, VarDecl[] fields, MethodDecl[] methods) {

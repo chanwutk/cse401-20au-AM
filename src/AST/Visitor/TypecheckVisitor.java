@@ -90,10 +90,12 @@ public class TypecheckVisitor extends AbstractVisitor {
 
 	public void visit(TryCatch n) {
 		n.s1.stream().forEach(s -> s.accept(this));
-		String decl = symbols.getVariableDeclaration(n.i.s);
+		String decl = symbols.getVariableDeclaration(n.f.i.s);
+		// TODO: allow other types of exception
 		if (decl != null) {
-			Error.errorAlreadyDefined(n.i.line_number, "Exception", n.i.s, decl);
+			Error.errorAlreadyDefined(n.f.line_number, "RuntimeException", n.f.i.s, decl);
 		}
+		// TODO: scope here
 		n.s1.stream().forEach(s -> s.accept(this));
 	}
 
@@ -106,6 +108,10 @@ public class TypecheckVisitor extends AbstractVisitor {
 	public void visit(While n) {
 		check(n.e.line_number, BaseType.BOOLEAN, typeof(n.e));
 		n.s.accept(this);
+	}
+
+	public void visit(Throw n) {
+		check(n.e.line_number, BaseType.RUNTIME_EXCEPTION, typeof(n.e));
 	}
 
 	public void visit(Print n) {

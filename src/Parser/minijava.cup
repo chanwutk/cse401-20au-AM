@@ -14,7 +14,7 @@ import java_cup.runtime.*;
 /* Terminals (lexical tokens returned by the scanner): */
 
 /* reserved words */
-terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE, WHILE, RETURN, TRY, CATCH, EXCEPTION;
+terminal CLASS, PUBLIC, STATIC, VOID, MAIN, STRING, EXTENDS, THIS, NEW, IF, ELSE, WHILE, RETURN, TRY, CATCH, RUNTIME_EXCEPTION, THROW;
 
 /* built-in types */
 terminal BOOLEAN, INT;
@@ -89,7 +89,12 @@ ClassDeclaration ::=
     CLASS:c Identifier:cls LBRACKET VarDeclarationList:fields MethodDeclarationList:methods RBRACKET {:
         fields.setLocation(fieldsxleft);
         methods.setLocation(methodsxleft);
-        RESULT = new ClassDeclSimple(cls, fields, methods, cxleft);
+        RESULT = new ClassDeclSimple(cls, false, fields, methods, cxleft);
+    :} |
+    CLASS:c Identifier:cls EXTENDS RUNTIME_EXCEPTION LBRACKET VarDeclarationList:fields MethodDeclarationList:methods RBRACKET {:
+        fields.setLocation(fieldsxleft);
+        methods.setLocation(methodsxleft);
+        RESULT = new ClassDeclSimple(cls, true, fields, methods, cxleft);
     :} |
     CLASS:c Identifier:cls EXTENDS Identifier:base LBRACKET VarDeclarationList:fields MethodDeclarationList:methods RBRACKET {:
         fields.setLocation(fieldsxleft);
@@ -169,6 +174,9 @@ Type ::=
     INT:i {:
         RESULT = new IntegerType(ixleft);
     :} |
+    RUNTIME_EXCEPTION:r {:
+        RESULT = new IdentifierType("RuntimeException", rxleft);
+    :} |
     IDENTIFIER:t {:
         RESULT = new IdentifierType(t, txleft);
     :};
@@ -184,8 +192,11 @@ Statement ::=
     WHILE:w LPAREN Expression:cond RPAREN Statement:body {:
         RESULT = new While(cond, body, wxleft);
     :} |
-    TRY:t LBRACKET StatementList:stmts1 RBRACKET CATCH LPAREN EXCEPTION Identifier:id RPAREN LBRACKET StatementList:stmts2 RBRACKET {:
-        RESULT = new TryCatch(stmts1, id, stmts2, txleft);
+    TRY:t LBRACKET StatementList:stmts1 RBRACKET CATCH LPAREN Formal:f RPAREN LBRACKET StatementList:stmts2 RBRACKET {:
+        RESULT = new TryCatch(stmts1, f, stmts2, txleft);
+    :} |
+    THROW:t Expression:expr SEMICOLON {:
+        RESULT = new Throw(expr, txleft);
     :} |
     PRINT:p LPAREN Expression:expr RPAREN SEMICOLON {:
         RESULT = new Print(expr, pxleft);

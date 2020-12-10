@@ -18,7 +18,7 @@ class Derived extends Base {
 		int ret;
 		try {
 			ret = this.f(this);
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			ret = 0;
 		}
 		return ret;

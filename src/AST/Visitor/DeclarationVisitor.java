@@ -59,13 +59,13 @@ public class DeclarationVisitor extends AbstractVisitor {
   }
 
   public void visit(ClassDeclSimple n) {
-    visit(n, new ClassType(n.i.s));
+    visit(n, new ClassType(n.i.s, n.ex));
   }
 
   public void visit(ClassDeclExtends n) {
     // this cannot fail because toposort guarantees base is already declared
     ClassType base = (ClassType) symbols.getClass(n.j);
-    visit(n, new ClassType(n.i.s, base));
+    visit(n, new ClassType(n.i.s, false, base));
   }
 
   public void visit(MethodDecl n) {
@@ -74,6 +74,7 @@ public class DeclarationVisitor extends AbstractVisitor {
       symbols = symbols.enterMethodScope(n.i.s);
       n.fl.stream().forEach(f -> f.accept(this));
       n.vl.stream().forEach(vd -> vd.accept(this));
+      n.sl.stream().filter(s -> s instanceof TryCatch).forEach(s -> s.accept(this));
       symbols = symbols.exitScope();
     } catch (SymbolException e) {
       n.error = true;
@@ -91,6 +92,14 @@ public class DeclarationVisitor extends AbstractVisitor {
   public void visit(Formal n) {
     try {
       symbols.putVariable(n.i, varDeclToType(n.t));
+    } catch (SymbolException e) {
+      n.error = true;
+    }
+  }
+
+  public void visit(TryCatch n) {
+    try {
+      symbols.putCatch(n.f.i, varDeclToType(n.f.t));
     } catch (SymbolException e) {
       n.error = true;
     }
@@ -119,7 +128,7 @@ public class DeclarationVisitor extends AbstractVisitor {
           ClassDecl base = classes.get(cde.j.s);
           if (base == null) {
             Error.errorNoSymbol(cd.line_number, "class", cde.j.s);
-            ClassDeclSimple replacement = new ClassDeclSimple(cd.i, cd.vl, cd.ml, null);
+            ClassDeclSimple replacement = new ClassDeclSimple(cd.i, false, cd.vl, cd.ml, null);
             replacement.line_number = cd.line_number;
             cl.set(i, replacement);
             requiredBy.put(replacement, requiredBy.get(cd));
@@ -174,7 +183,11 @@ public class DeclarationVisitor extends AbstractVisitor {
     } else if (t instanceof IntArrayType) {
       return BaseType.ARRAY;
     } else if (t instanceof IdentifierType) {
-      return symbols.getClass(((IdentifierType) t).s, t.line_number);
+      IdentifierType ti = (IdentifierType) t;
+      if ("RuntimeException".equals(ti.s)) {
+        return BaseType.RUNTIME_EXCEPTION;
+      }
+      return symbols.getClass(ti.s, t.line_number);
     } else {
       // this would be compiler internal bug
       throw new IllegalArgumentException();

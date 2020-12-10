@@ -20,7 +20,7 @@ class C2 {
 		C2 y;
 		try {
 			y = x;
-		} catch (Exception e) {}
+		} catch (RuntimeException e) {}
 		return x.f(i);
 	}
 }

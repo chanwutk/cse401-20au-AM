@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 public class ClassType implements Type {
 	public final String name;
+	public final boolean throwable;
 	public final ClassType base;
 	// only methods, not fields, can be accessed by `x.y` dot natation
 	public final Map<String, Signature> methods = new HashMap<>();
@@ -18,11 +19,16 @@ public class ClassType implements Type {
 	public int size;
 
 	public ClassType(String name) {
-		this(name, null);
+		this(name, false);
 	}
 
-	public ClassType(String name, ClassType base) {
+	public ClassType(String name, boolean ex) {
+		this(name, ex, null);
+	}
+
+	public ClassType(String name, boolean throwable, ClassType base) {
 		this.name = name;
+		this.throwable = throwable;
 		this.base = base;
 	}
 
@@ -51,7 +57,7 @@ public class ClassType implements Type {
 		if (this == that || that == BaseType.UNKNOWN)
 			return true;
 		else if (base == null)
-			return false;
+			return that == BaseType.RUNTIME_EXCEPTION && this.throwable;
 		else
 			return base.subtypeOf(that);
 	}

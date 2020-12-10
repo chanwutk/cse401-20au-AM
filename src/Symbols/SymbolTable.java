@@ -5,7 +5,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import AST.Identifier;
 import AST.IdentifierExp;
@@ -148,6 +150,12 @@ public class SymbolTable {
 		}
 	}
 
+	public void putCatch(Identifier id, Type exception) throws SymbolException {
+		CatchInfo info = new CatchInfo(this);
+		info.scope.putVariable(id, exception);
+		catches.add(info);
+	}
+
 	public void putVariable(Identifier id, Type type) throws SymbolException {
 		if (vars.containsKey(id.s)) {
 			Error.errorAlreadyDefined(id.line_number, "variable", id.s, name);
@@ -166,6 +174,10 @@ public class SymbolTable {
 	public SymbolTable enterMethodScope(String id) {
 		MethodInfo info = methods.get(id);
 		return info.scope;
+	}
+
+	public SymbolTable enterCatchScope(int index) {
+		return catches.get(index).scope;
 	}
 
 	public SymbolTable exitScope() {
@@ -230,6 +242,7 @@ public class SymbolTable {
 	private final Map<String, ClassInfo> classes = new HashMap<>();
 	private final Map<String, MethodInfo> methods = new HashMap<>();
 	private final Map<String, VariableInfo> vars = new HashMap<>();
+	private final List<CatchInfo> catches = new ArrayList<>();
 
 	private SymbolTable(String name, SymbolTable parent, SymbolTable base) {
 		this.name = name;
@@ -267,6 +280,14 @@ public class SymbolTable {
 
 		public VariableInfo(Type type) {
 			this.type = type;
+		}
+	}
+
+	private static class CatchInfo {
+		final SymbolTable scope;
+		
+		public CatchInfo(SymbolTable parent) {
+			this.scope = new SymbolTable("catch", parent, null);
 		}
 	}
 

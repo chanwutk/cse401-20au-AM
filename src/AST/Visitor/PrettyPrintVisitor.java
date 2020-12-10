@@ -63,6 +63,9 @@ public class PrettyPrintVisitor implements Visitor {
     indent();
     System.out.print("class ");
     n.i.accept(this);
+    if (n.ex) {
+      System.out.print(" extends RuntimeException");
+    }
     System.out.println(" { ");
     inc_indent_level();
     for (int i = 0; i < n.vl.size(); i++) {
@@ -219,8 +222,8 @@ public class PrettyPrintVisitor implements Visitor {
     });
     dec_indent_level();
     indent();
-    System.out.print("} catch (Exception ");
-    n.i.accept(this);
+    System.out.print("} catch (");
+    n.f.accept(this);
     System.out.println(") {");
     inc_indent_level();
     n.s2.stream().forEach(s -> {
@@ -275,6 +278,13 @@ public class PrettyPrintVisitor implements Visitor {
     inc_indent_level();
     n.s.accept(this);
     dec_indent_level();
+  }
+  
+  public void visit(Throw n) {
+    indent();
+    System.out.print("throw ");
+    n.e.accept(this);
+    System.out.print(";");
   }
 
   // Exp e;

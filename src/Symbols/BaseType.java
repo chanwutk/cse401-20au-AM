@@ -19,6 +19,12 @@ public enum BaseType implements Type {
 			return "int[]";
 		}
 	},
+	RUNTIME_EXCEPTION {
+		@Override
+		public String toString() {
+			return "RuntimeException";
+		}
+	},
 	UNKNOWN {
 		@Override
 		public boolean subtypeOf(Type that) {

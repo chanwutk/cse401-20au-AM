@@ -5,12 +5,13 @@ import java_cup.runtime.ComplexSymbolFactory.Location;
 
 public class TryCatch extends Statement {
   public StatementList s1,s2;
-  public Identifier i;
+  public Formal f;
+  public boolean error = false;
 
-  public TryCatch(StatementList as1, Identifier ai, StatementList as2, Location pos) {
+  public TryCatch(StatementList as1, Formal af, StatementList as2, Location pos) {
     super(pos);
     s1=as1; s2=as2;
-    i=ai;
+    f = af;
   }
 
   public void accept(Visitor v) {

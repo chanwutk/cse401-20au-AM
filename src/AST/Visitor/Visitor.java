@@ -18,6 +18,7 @@ public interface Visitor {
   public void visit(If n);
   public void visit(TryCatch n);
   public void visit(While n);
+  public void visit(Throw n);
   public void visit(Print n);
   public void visit(Assign n);
   public void visit(ArrayAssign n);
