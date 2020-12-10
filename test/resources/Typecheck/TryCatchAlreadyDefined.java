@@ -4,6 +4,8 @@ class TryCatchAlreadyDefined {
   }
 }
 
+class C0 extends RuntimeException {}
+
 class C1 {
   int a;
   public int run() {
@@ -18,6 +20,22 @@ class C1 {
     catch (RuntimeException b) {
       b = 0;
     }
+
+    try{}
+    catch (C0 c) {
+      throw c;
+    }
+
+    try{}
+    catch (RuntimeException e) {
+      throw new C0();
+    }
+
+    try{}
+    catch (C1 e) {
+      throw new C1();
+    }
+
     return b;
   }
 }

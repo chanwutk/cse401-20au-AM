@@ -24,6 +24,25 @@ public class TypecheckVisitor extends AbstractVisitor {
 		return expType;
 	}
 
+  private Type varDeclToType(AST.Type t) {
+    if (t instanceof BooleanType) {
+      return BaseType.BOOLEAN;
+    } else if (t instanceof IntegerType) {
+      return BaseType.INT;
+    } else if (t instanceof IntArrayType) {
+      return BaseType.ARRAY;
+    } else if (t instanceof IdentifierType) {
+      IdentifierType ti = (IdentifierType) t;
+      if ("RuntimeException".equals(ti.s)) {
+        return BaseType.RUNTIME_EXCEPTION;
+      }
+      return symbols.getClass(ti.s, t.line_number);
+    } else {
+      // this would be compiler internal bug
+      throw new IllegalArgumentException();
+    }
+  }
+
 	private void check(int ln, Type supertype, Type subtype) {
 		if (!subtype.subtypeOf(supertype))
 			Error.errorIncompatibleTypes(ln, supertype, subtype);
@@ -91,12 +110,15 @@ public class TypecheckVisitor extends AbstractVisitor {
 	public void visit(TryCatch n) {
 		n.s1.stream().forEach(s -> s.accept(this));
 		String decl = symbols.getVariableDeclaration(n.f.i.s);
-		// TODO: allow other types of exception
 		if (decl != null) {
-			Error.errorAlreadyDefined(n.f.line_number, "RuntimeException", n.f.i.s, decl);
+			Error.errorAlreadyDefined(n.f.line_number, varDeclToType(n.f.t).toString(), n.f.i.s, decl);
 		}
-		// TODO: scope here
-		n.s1.stream().forEach(s -> s.accept(this));
+
+		symbols = symbols.enterCatchScope(n.index);
+		Type t = symbols.getVariable(n.f.i);
+	 	check(n.f.line_number, BaseType.RUNTIME_EXCEPTION, t);
+		n.s2.stream().forEach(s -> s.accept(this));
+		symbols = symbols.exitScope();
 	}
 
 	public void visit(If n) {

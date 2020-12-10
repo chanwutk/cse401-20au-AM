@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import AST.*;
 import IO.Error;
@@ -74,7 +75,11 @@ public class DeclarationVisitor extends AbstractVisitor {
       symbols = symbols.enterMethodScope(n.i.s);
       n.fl.stream().forEach(f -> f.accept(this));
       n.vl.stream().forEach(vd -> vd.accept(this));
-      n.sl.stream().filter(s -> s instanceof TryCatch).forEach(s -> s.accept(this));
+      IntStream.range(0, n.sl.size()).filter(i -> n.sl.get(i) instanceof TryCatch).forEach(i -> {
+        TryCatch t = (TryCatch) n.sl.get(i);
+        t.index = i;
+        t.accept(this);
+      });
       symbols = symbols.exitScope();
     } catch (SymbolException e) {
       n.error = true;

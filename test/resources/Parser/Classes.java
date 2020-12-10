@@ -4,6 +4,8 @@ class Classes {
 	}
 }
 
+class Ex extends RuntimeException {}
+
 class Base {
 	int x;
 	public int f(Base b) {
@@ -19,7 +21,13 @@ class Derived extends Base {
 		try {
 			ret = this.f(this);
 		} catch (RuntimeException e) {
-			ret = 0;
+			throw new Ex();
+		}
+
+		try {
+			ret = this.f(this);
+		} catch (Ex e) {
+			throw e;
 		}
 		return ret;
 	}

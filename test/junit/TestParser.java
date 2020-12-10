@@ -96,6 +96,7 @@ public class TestParser {
 				new IntegerLiteral(0, null),
 				null),
 			null);
+		var ex = classDecl("Ex", true, new VarDecl[]{}, new MethodDecl[]{});
 		var base = classDecl(
 			"Base",
 			false,
@@ -129,7 +130,10 @@ public class TestParser {
 		var s1 = new StatementList(null);
 		s1.add(new Assign(new Identifier("ret", null), call(new This(null), "f", new Exp[]{new This(null)}), null));
 		var s2 = new StatementList(null);
-		s2.add(new Assign(new Identifier("ret", null), new IntegerLiteral(0, null), null));
+		s2.add(new Throw(new NewObject(new Identifier("Ex", null), null), null));
+		// s2.add(new Assign(new Identifier("ret", null), new IntegerLiteral(0, null), null));
+		var s3 = new StatementList(null);
+		s3.add(new Throw(new IdentifierExp("e", null), null));
 		var derived = classDecl(
 			"Derived",
 			"Base",
@@ -145,10 +149,13 @@ public class TestParser {
 							null),
 					},
 					new VarDecl[]{new VarDecl(new IntegerType(null), id("ret"), null)},
-					new Statement[]{new TryCatch(s1, new Formal(new IdentifierType("RuntimeException", null), id("e"), null), s2, null)},
+					new Statement[]{
+						new TryCatch(s1, new Formal(new IdentifierType("RuntimeException", null), id("e"), null), s2, null),
+						new TryCatch(s1, new Formal(new IdentifierType("Ex", null), id("e"), null), s3, null)
+					},
 					new IdentifierExp("ret", null)),
 			});
-		assertAST(program(main, new ClassDecl[]{base, derived}));
+		assertAST(program(main, new ClassDecl[]{ex, base, derived}));
 	}
 
 	private void assertAST(Program expected) {
