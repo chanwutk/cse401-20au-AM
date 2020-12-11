@@ -22,6 +22,8 @@ public class AllocationVisitor extends AbstractVisitor {
 			Asm.fieldString("ArrayIndexOutOfBoundException: Index %d out of bounds for length %d\\n");
 			Asm.label(Asm.NULLPOINTER_MSG);
 			Asm.fieldString("NullPointerException\\n");
+			Asm.label(Asm.EXCEPTION_MSG);
+			Asm.fieldString("Exception\\n");
 			var vtables = new HashMap<ClassType, LinkedHashMap<String, String>>();
 			symbols.allClasses().forEach(cls -> putVtables(cls, vtables));
 			vtables.entrySet().stream().forEach(e -> {
@@ -30,8 +32,16 @@ public class AllocationVisitor extends AbstractVisitor {
 				Asm.field(cls.base == null ? "0" : Asm.vtable(cls.base.name));
 				e.getValue().values().forEach(m -> Asm.field(m));
 			});
+			n.m.accept(this);
 			n.cl.stream().forEach(cd -> cd.accept(this));
 		}
+	}
+
+	public void visit(MainClass n) {
+		symbols = symbols.enterClassScope(n.i1.s);
+		resetLocation(Type.RBP, -1);
+		n.s.accept(this);
+		symbols = symbols.exitScope();
 	}
 
 	private void visitClassDecl(ClassDecl n) {
@@ -82,6 +92,9 @@ public class AllocationVisitor extends AbstractVisitor {
 			offset--;
 		});
 
+		// try-catch
+		n.sl.stream().forEach(s -> s.accept(this));
+
 		symbols = symbols.exitScope();
 	}
 
@@ -98,6 +111,38 @@ public class AllocationVisitor extends AbstractVisitor {
 	public void visit(Formal n) {
 		visitVar(n.i.s);
 	}
+
+	public void visit(Try n) {
+		n.s.stream().forEach(s -> s.accept(this));
+		n.c.stream().forEach(c -> c.accept(this));
+	}
+
+	public void visit(Catch n) {
+		symbols = symbols.enterCatchScope(n);
+		visitVar(n.f.i.s);
+		offset--;
+		n.s.stream().forEach(s -> s.accept(this));
+		offset++;
+		symbols = symbols.exitScope();
+	}
+
+	public void visit(Block n) {
+		n.sl.stream().forEach(s -> s.accept(this));
+	}
+
+	public void visit(If n) {
+		n.s1.accept(this);
+		n.s2.accept(this);
+	}
+
+	public void visit(While n) {
+		n.s.accept(this);
+	}
+
+	public void visit(Throw n) {}
+	public void visit(Print n) {}
+	public void visit(Assign n) {}
+	public void visit(ArrayAssign n) {}
 
 	private SymbolTable symbols;
 	private int offset;

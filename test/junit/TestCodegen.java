@@ -108,7 +108,7 @@ public class TestCodegen {
             err += line + "\n";
         }
         process.waitFor();
-        assertEquals(error, process.exitValue());
+        assertEquals(command, error, process.exitValue());
         process.destroy();
         return List.of(out, err);
     }

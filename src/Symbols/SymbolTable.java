@@ -18,18 +18,16 @@ public class SymbolTable {
 
 	public Type getClass(String s, int line_number) {
 		ClassInfo info = classes.get(s);
-		if (info == null && base != null)
-			info = base.classes.get(s);
-		if (info != null) {
+		if (info != null)
 			return info.type;
-		} else if (parent != null) {
+		if (base != null)
+			return base.getClass(s, line_number);
+		if (parent != null)
 			return parent.getClass(s, line_number);
-		} else {
-			Error.errorNoSymbol(line_number, "class", s);
-			Error.reportLocation();
-			classes.put(s, new ClassInfo(BaseType.UNKNOWN, this, null));
-			return BaseType.UNKNOWN;
-		}
+		Error.errorNoSymbol(line_number, "class", s);
+		Error.reportLocation();
+		classes.put(s, new ClassInfo(BaseType.UNKNOWN, this, null));
+		return BaseType.UNKNOWN;
 	}
 
 	public Type getClass(Identifier id) {
@@ -61,30 +59,26 @@ public class SymbolTable {
 
 	public VarLocation getVariableLocation(String s) {
 		VariableInfo info = vars.get(s);
-		if (info == null && base != null)
-			info = base.vars.get(s);
-		if (info != null) {
+		if (info != null)
 			return info.location;
-		} else {
-			assert parent != null;
-			return parent.getVariableLocation(s);
-		}
+		if (base != null)
+			return base.getVariableLocation(s);
+		assert parent != null;
+		return parent.getVariableLocation(s);
 	}
 
 	private Type getVariable(String s, int line_number) {
 		VariableInfo info = vars.get(s);
-		if (info == null && base != null)
-			info = base.vars.get(s);
-		if (info != null) {
+		if (info != null)
 			return info.type;
-		} else if (parent != null) {
+		if (base != null)
+			return base.getVariable(s, line_number);
+		if (parent != null)
 			return parent.getVariable(s, line_number);
-		} else {
-			Error.errorNoSymbol(line_number, "variable", s);
-			Error.reportLocation();
-			vars.put(s, new VariableInfo(BaseType.UNKNOWN));
-			return BaseType.UNKNOWN;
-		}
+		Error.errorNoSymbol(line_number, "variable", s);
+		Error.reportLocation();
+		vars.put(s, new VariableInfo(BaseType.UNKNOWN));
+		return BaseType.UNKNOWN;
 	}
 
 	public Type getVariable(Identifier id) {

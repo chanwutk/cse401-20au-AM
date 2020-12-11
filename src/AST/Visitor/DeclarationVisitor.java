@@ -103,6 +103,7 @@ public class DeclarationVisitor extends AbstractVisitor {
   }
 
   public void visit(Try n) {
+    n.s.stream().forEach(s -> s.accept(this));
     n.c.stream().forEach(c -> c.accept(this));
   }
 
@@ -121,6 +122,7 @@ public class DeclarationVisitor extends AbstractVisitor {
         }
       }
       symbols.putVariable(n.f.i, t);
+      n.s.stream().forEach(s -> s.accept(this));
     } catch (SymbolException e) {
       n.error = true;
     }

@@ -165,6 +165,8 @@ public class Asm {
 
 	public static final String ARRAYINDEXOUTOFBOUND_MSG     = ".$ArrayIndexOutOfBound$msg";
 	public static final String ARRAYINDEXOUTOFBOUND_HANDLER = ".$ArrayIndexOutOfBound$handler";
-	public static final String NULLPOINTER_MSG     = ".$NULLPOINTER$msg";
-	public static final String NULLPOINTER_HANDLER = ".$NULLPOINTER$handler";
+	public static final String NULLPOINTER_MSG     = ".$NullPointer$msg";
+	public static final String NULLPOINTER_HANDLER = ".$NullPointer$handler";
+	public static final String EXCEPTION_MSG     = ".$Exception$msg";
+	public static final String EXCEPTION_HANDLER = ".$Exception$handler";
 }

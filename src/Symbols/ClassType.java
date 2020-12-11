@@ -45,6 +45,14 @@ public class ClassType implements Type {
 		}
 	}
 
+	public int getOffset(String method) {
+		Integer offset = this.offset.get(method);
+		if (offset != null)
+			return offset;
+		assert base != null;
+		return base.getOffset(method);
+	}
+
 	@Override
 	public String toString() {
 		return name;
