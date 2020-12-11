@@ -21,7 +21,7 @@ import org.junit.runners.Parameterized.Parameters;
 import AST.Program;
 import AST.Visitor.DeclarationVisitor;
 import AST.Visitor.TypecheckVisitor;
-import AST.Visitor.VtableVisitor;
+import AST.Visitor.AllocationVisitor;
 import AST.Visitor.CodegenVisitor;
 import IO.Asm;
 import IO.Error;
@@ -126,12 +126,12 @@ public class TestCodegen {
         var symbols = new SymbolTable();
         ast.accept(new DeclarationVisitor(symbols));
         ast.accept(new TypecheckVisitor(symbols));
-        ast.accept(new VtableVisitor(symbols));
+        ast.accept(new AllocationVisitor(symbols));
         ast.accept(new CodegenVisitor(symbols));
 
         if (Error.numErrors == 0)
             symbols.prettyPrint(Error.err, 0);
-        
+
         var execName = RUNTIME_PREFIX + name;
         var asmName = execName + ASM_EXTENSION;
         var execPath = RUNTIME_LOCATION + execName;
@@ -150,8 +150,8 @@ public class TestCodegen {
             var minijavaBuild = execute(minijavaBuildCommand(execPath, asmPath), 0);
             assertEquals("", minijavaBuild.get(0));
             assertEquals("", minijavaBuild.get(1));
-            var minijavaRun = execute(minijavaRunCommand(execPath), expected == null ? 0 : 1);
-            
+            var minijavaRun = execute(minijavaRunCommand(execPath), expected == null ? 0 : 134); // SIGABRT
+
             if (expected == null) {
                 var javaBuild = execute(javaBuildCommand(javaPath), 0);
                 assertEquals("", javaBuild.get(0));

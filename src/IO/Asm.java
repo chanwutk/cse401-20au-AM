@@ -163,6 +163,8 @@ public class Asm {
 		return numArgs < ARGS.size() ? 0 : numArgs - ARGS.size();
 	}
 
-	public static final String ARRAYINDEXOUTOFBOUND_MSG = ".$ArrayIndexOutOfBound$msg";
+	public static final String ARRAYINDEXOUTOFBOUND_MSG     = ".$ArrayIndexOutOfBound$msg";
 	public static final String ARRAYINDEXOUTOFBOUND_HANDLER = ".$ArrayIndexOutOfBound$handler";
+	public static final String NULLPOINTER_MSG     = ".$NULLPOINTER$msg";
+	public static final String NULLPOINTER_HANDLER = ".$NULLPOINTER$handler";
 }

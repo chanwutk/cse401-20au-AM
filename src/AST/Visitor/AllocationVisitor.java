@@ -10,8 +10,8 @@ import Symbols.SymbolTable;
 import Symbols.SymbolTable.VarLocation.Type;
 import static IO.Error.numErrors;
 
-public class VtableVisitor extends AbstractVisitor {
-	public VtableVisitor(SymbolTable symbols) {
+public class AllocationVisitor extends AbstractVisitor {
+	public AllocationVisitor(SymbolTable symbols) {
 		this.symbols = symbols;
 	}
 
@@ -19,7 +19,9 @@ public class VtableVisitor extends AbstractVisitor {
 		if (numErrors == 0) {
 			Asm.rodata();
 			Asm.label(Asm.ARRAYINDEXOUTOFBOUND_MSG);
-			Asm.fieldString("Exception: Index %d out of bounds for length %d\\n");
+			Asm.fieldString("ArrayIndexOutOfBoundException: Index %d out of bounds for length %d\\n");
+			Asm.label(Asm.NULLPOINTER_MSG);
+			Asm.fieldString("NullPointerException\\n");
 			var vtables = new HashMap<ClassType, LinkedHashMap<String, String>>();
 			symbols.allClasses().forEach(cls -> putVtables(cls, vtables));
 			vtables.entrySet().stream().forEach(e -> {

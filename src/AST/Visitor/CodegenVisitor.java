@@ -14,13 +14,23 @@ public class CodegenVisitor extends AbstractVisitor {
 	public void visit(Program n) {
 		if (Error.numErrors == 0) {
 			Asm.text();
-			Asm.label(Asm.ARRAYINDEXOUTOFBOUND_HANDLER);
+
+			String printAndExit = newLabel();
+			Asm.label(printAndExit);
 			Asm.and(Asm.lit(-1-0xf), Asm.rsp); // 0x ffffffff fffffff0
+			Asm.callc("printf");
+			Asm.mov("stdout(%rip)", Asm.rdi);
+			Asm.callc("fflush");
+			Asm.callc("abort");
+
+			Asm.label(Asm.ARRAYINDEXOUTOFBOUND_HANDLER);
 			Asm.lea(Asm.litLabel(Asm.ARRAYINDEXOUTOFBOUND_MSG), Asm.rdi);
 			Asm.mov(Asm.mem(Asm.rax, null, -1), Asm.rsi);
-			Asm.callc("printf");
-			Asm.mov(Asm.lit(1), Asm.rdi);
-			Asm.callc("exit");
+			Asm.jmp(printAndExit);
+
+			Asm.label(Asm.NULLPOINTER_HANDLER);
+			Asm.lea(Asm.litLabel(Asm.NULLPOINTER_MSG), Asm.rdi);
+			Asm.jmp(printAndExit);
 
 			n.m.accept(this);
 			n.cl.stream().forEach(cd -> cd.accept(this));
@@ -59,6 +69,8 @@ public class CodegenVisitor extends AbstractVisitor {
 		Asm.mov(Asm.rdi, Asm.mem(Asm.rbp, null, -1));
 		for (int i = 0; i < numRegArgs; i++)
 			Asm.mov(Asm.ARGS.get(i), Asm.mem(Asm.rbp, null, -2 - i));
+		for (int i = 0; i < n.vl.size(); i++)
+			Asm.mov(Asm.lit(0), Asm.mem(Asm.rsp, null, i));
 		n.sl.stream().forEach(s -> s.accept(this));
 		n.e.accept(this);
 		Asm.leave();
@@ -180,6 +192,8 @@ public class CodegenVisitor extends AbstractVisitor {
 			push(Asm.rax);
 		}
 		n.e.accept(this);
+		Asm.test(Asm.rax);
+		Asm.je(Asm.NULLPOINTER_HANDLER);
 		Asm.mov(Asm.rax, Asm.rdi);
 		for (int i = 0; i < Asm.numRegArgs(n.el.size()); i++) {
 			pop(Asm.ARGS.get(i));
