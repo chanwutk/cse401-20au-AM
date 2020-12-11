@@ -7,4 +7,4 @@ Changes in symbol table:
     and where the offset is based on (`this` or `%rbp`).
 
 Other interesting things:
-  When array index out of bound, we print an error message and call C `abort()`.
+  When we have array index out of bound or null pointer or uncaught exception, we print an error message and call C `abort()`.
