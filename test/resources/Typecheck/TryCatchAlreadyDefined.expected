@@ -1,6 +1,0 @@
-TryCatchAlreadyDefined.java:15: error: RuntimeException a is already defined in classC1
-TryCatchAlreadyDefined.java:16: error: incompatible types: int cannot be converted to RuntimeException
-TryCatchAlreadyDefined.java:20: error: RuntimeException b is already defined in method run(...)
-TryCatchAlreadyDefined.java:21: error: incompatible types: int cannot be converted to RuntimeException
-TryCatchAlreadyDefined.java:35: error: incompatible types: C1 cannot be converted to RuntimeException
-TryCatchAlreadyDefined.java:36: error: incompatible types: C1 cannot be converted to RuntimeException

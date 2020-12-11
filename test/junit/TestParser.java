@@ -134,6 +134,18 @@ public class TestParser {
 		// s2.add(new Assign(new Identifier("ret", null), new IntegerLiteral(0, null), null));
 		var s3 = new StatementList(null);
 		s3.add(new Throw(new IdentifierExp("e", null), null));
+		var simpleTry = new Try(s1, null);
+		simpleTry.c.add(new Catch(new Formal(new IdentifierType("Ex", null), id("e"), null), s2, null));
+		var simpleTryList = new StatementList(null);
+		simpleTryList.add(simpleTry);
+		var s1AndTry = new StatementList(null);
+		s1AndTry.add(s1.get(0));
+		var tryMultipleCatches = new Try(s1, null);
+		tryMultipleCatches.c.add(new Catch(new Formal(new IdentifierType("Ex", null), id("e"), null), simpleTryList, null));
+		tryMultipleCatches.c.add(new Catch(new Formal(new IdentifierType("Ex2", null), id("e"), null), new StatementList(null), null));
+		s1AndTry.add(tryMultipleCatches);
+		var complexTry = new Try(s1AndTry, null);
+		complexTry.c.add(new Catch(new Formal(new IdentifierType("Ex", null), id("e"), null), s3, null));
 		var derived = classDecl(
 			"Derived",
 			"Base",
@@ -150,8 +162,8 @@ public class TestParser {
 					},
 					new VarDecl[]{new VarDecl(new IntegerType(null), id("ret"), null)},
 					new Statement[]{
-						new TryCatch(s1, new Formal(new IdentifierType("RuntimeException", null), id("e"), null), s2, null),
-						new TryCatch(s1, new Formal(new IdentifierType("Ex", null), id("e"), null), s3, null)
+						simpleTry,
+						complexTry,
 					},
 					new IdentifierExp("ret", null)),
 			});

@@ -5,9 +5,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import AST.Identifier;
 import AST.IdentifierExp;
@@ -73,38 +71,6 @@ public class SymbolTable {
 		}
 	}
 
-	public String getVariableDeclaration(String s) {
-		VariableInfo info = vars.get(s);
-		if (info != null) {
-			return name;
-		}
-		if (base != null) {
-			info = base.vars.get(s);
-			if (info != null) {
-				return base.name;
-			}
-		}
-		if (parent != null) {
-			return parent.getVariableDeclaration(s);
-		} else {
-			return null;
-		}
-	}
-
-	public boolean hasVariable(String s) {
-		VariableInfo info = vars.get(s);
-		if (info == null && base != null) {
-			info = base.vars.get(s);
-		}
-		if (info != null) {
-			return true;
-		} else if (parent != null) {
-			return parent.hasVariable(s);
-		} else {
-			return false;
-		}
-	}
-
 	private Type getVariable(String s, int line_number) {
 		VariableInfo info = vars.get(s);
 		if (info == null && base != null)
@@ -150,10 +116,8 @@ public class SymbolTable {
 		}
 	}
 
-	public void putCatch(Identifier id, Type exception) throws SymbolException {
-		CatchInfo info = new CatchInfo(this);
-		info.scope.putVariable(id, exception);
-		catches.add(info);
+	public void putCatch(AST.Catch catch_) {
+		catches.put(catch_, new CatchInfo(this));
 	}
 
 	public void putVariable(Identifier id, Type type) throws SymbolException {
@@ -176,8 +140,9 @@ public class SymbolTable {
 		return info.scope;
 	}
 
-	public SymbolTable enterCatchScope(int index) {
-		return catches.get(index).scope;
+	public SymbolTable enterCatchScope(AST.Catch catch_) {
+		CatchInfo info = catches.get(catch_);
+		return info.scope;
 	}
 
 	public SymbolTable exitScope() {
@@ -242,7 +207,7 @@ public class SymbolTable {
 	private final Map<String, ClassInfo> classes = new HashMap<>();
 	private final Map<String, MethodInfo> methods = new HashMap<>();
 	private final Map<String, VariableInfo> vars = new HashMap<>();
-	private final List<CatchInfo> catches = new ArrayList<>();
+	private final Map<AST.Catch, CatchInfo> catches = new HashMap<>();
 
 	private SymbolTable(String name, SymbolTable parent, SymbolTable base) {
 		this.name = name;
@@ -285,7 +250,7 @@ public class SymbolTable {
 
 	private static class CatchInfo {
 		final SymbolTable scope;
-		
+
 		public CatchInfo(SymbolTable parent) {
 			this.scope = new SymbolTable("catch", parent, null);
 		}

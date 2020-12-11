@@ -20,12 +20,20 @@ class Derived extends Base {
 		int ret;
 		try {
 			ret = this.f(this);
-		} catch (RuntimeException e) {
+		} catch (Ex e) {
 			throw new Ex();
 		}
-
 		try {
 			ret = this.f(this);
+			try {
+				ret = this.f(this);
+			} catch (Ex e) {
+				try {
+					ret = this.f(this);
+				} catch (Ex e) {
+					throw new Ex();
+				}
+			} catch (Ex2 e) {}
 		} catch (Ex e) {
 			throw e;
 		}

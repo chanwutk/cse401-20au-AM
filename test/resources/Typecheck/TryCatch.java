@@ -12,12 +12,12 @@ class C1 {
     int b;
     try {
 
-    } catch (RuntimeException a) {
+    } catch (C0 a) {
       a = 0;
     }
 
     try {}
-    catch (RuntimeException b) {
+    catch (C2 b) {
       b = 0;
     }
 
@@ -27,7 +27,7 @@ class C1 {
     }
 
     try{}
-    catch (RuntimeException e) {
+    catch (C2 e) {
       throw new C0();
     }
 

@@ -41,6 +41,11 @@ public class Error {
 		Error.numErrors++;
 	}
 
+	public static void errorNotThrowable(int ln, Type actual) {
+		err.printf("%s:%d: error: incompatible types: %s cannot be converted to Throwable\n", Error.file, ln, actual);
+		Error.numErrors++;
+	}
+
 	public static void errorNumberOfParametersWhenOverride(int ln, int expected, int actual) {
 		err.printf("%s:%d: error: cannot override method with different number of parameters: expected %d parameters, but received %d parameters\n", Error.file, ln, expected, actual);
 		Error.numErrors++;
@@ -63,6 +68,13 @@ public class Error {
 		err.printf("  required: %s\n", String.join(",", formal.stream().map(f -> f.toString()).collect(Collectors.toList())));
 		err.printf("  found: %s\n", String.join(",", actual.stream().map(f -> f.toString()).collect(Collectors.toList())));
 		err.printf("  reason: actual and formal argument lists differ in length\n");
+		Error.numErrors++;
+	}
+
+	public static void errorUnexpectedType(int ln, Type actual) {
+		err.printf("%s:%d: error: unexpected type\n", Error.file, ln);
+		err.printf("  required: class\n");
+		err.printf("  found:    %s\n", actual);
 		Error.numErrors++;
 	}
 

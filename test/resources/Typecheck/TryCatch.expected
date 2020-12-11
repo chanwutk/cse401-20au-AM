@@ -1,0 +1,4 @@
+TryCatch.java:35: error: incompatible types: C1 cannot be converted to Throwable
+TryCatch.java:16: error: incompatible types: int cannot be converted to C0
+TryCatch.java:21: error: incompatible types: int cannot be converted to C2
+TryCatch.java:36: error: incompatible types: C1 cannot be converted to Throwable

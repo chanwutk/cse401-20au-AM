@@ -197,19 +197,23 @@ public class ASTPrintVisitor implements Visitor {
       n.sl.get(i).accept(this); ln();
     }
   }
-  
-  public void visit(TryCatch n) {
+
+  public void visit(Try n) {
     indent(); name(n); space(); line(n);
     inc_indent_level();
       indent(); print("try:");
       inc_indent_level();
-        n.s1.stream().forEach(s -> s.accept(this)); ln();
+        n.s.stream().forEach(s -> s.accept(this)); ln();
       dec_indent_level();
+      n.c.stream().forEach(c -> c.accept(this));
+    dec_indent_level();
+  }
+
+  public void visit(Catch n) {
       indent(); print("catch: "); n.f.accept(this);
       inc_indent_level();
-        n.s2.stream().forEach(s -> s.accept(this)); ln();
+        n.s.stream().forEach(s -> s.accept(this)); ln();
       dec_indent_level();
-    dec_indent_level();
   }
 
   // Exp e;

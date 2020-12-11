@@ -56,6 +56,7 @@ nonterminal FormalList FormalList;
 nonterminal FormalList NonEmptyFormalList;
 nonterminal Type Type;
 nonterminal Statement Statement;
+nonterminal Try TryCatch;
 nonterminal StatementList StatementList;
 nonterminal StatementList NonEmptyStatementList;
 nonterminal Exp Expression;
@@ -174,9 +175,6 @@ Type ::=
     INT:i {:
         RESULT = new IntegerType(ixleft);
     :} |
-    RUNTIME_EXCEPTION:r {:
-        RESULT = new IdentifierType("RuntimeException", rxleft);
-    :} |
     IDENTIFIER:t {:
         RESULT = new IdentifierType(t, txleft);
     :};
@@ -192,8 +190,8 @@ Statement ::=
     WHILE:w LPAREN Expression:cond RPAREN Statement:body {:
         RESULT = new While(cond, body, wxleft);
     :} |
-    TRY:t LBRACKET StatementList:stmts1 RBRACKET CATCH LPAREN Formal:f RPAREN LBRACKET StatementList:stmts2 RBRACKET {:
-        RESULT = new TryCatch(stmts1, f, stmts2, txleft);
+    TryCatch:t {:
+        RESULT = t;
     :} |
     THROW:t Expression:expr SEMICOLON {:
         RESULT = new Throw(expr, txleft);
@@ -206,6 +204,17 @@ Statement ::=
     :} |
     Identifier:id LBRACKET_SQUARE Expression:index RBRACKET_SQUARE BECOMES Expression:value SEMICOLON {:
         RESULT = new ArrayAssign(id, index, value, idxleft);
+    :};
+
+TryCatch ::=
+    TRY:t LBRACKET StatementList:stmts1 RBRACKET CATCH:c LPAREN Formal:f RPAREN LBRACKET StatementList:stmts2 RBRACKET {:
+        Try tryCatch = new Try(stmts1, txleft);
+        tryCatch.c.add(new Catch(f, stmts2, cxleft));
+        RESULT = tryCatch;
+    :} |
+    TryCatch:t CATCH:c LPAREN Formal:f RPAREN LBRACKET StatementList:stmts RBRACKET {:
+        t.c.add(new Catch(f, stmts, cxleft));
+        RESULT = t;
     :};
 
 StatementList ::=

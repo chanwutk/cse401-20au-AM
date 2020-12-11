@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import AST.*;
 import IO.Error;
@@ -31,6 +30,11 @@ public class DeclarationVisitor extends AbstractVisitor {
     n.m.accept(this);
     n.cl.reset(toposort(n.cl));
     n.cl.stream().forEach(cd -> cd.accept(this));
+
+    symbols = symbols.enterClassScope(n.m.i1.s);
+    n.m.s.accept(this);
+    symbols = symbols.exitScope();
+
     n.cl.stream().forEach(cd -> {
       ClassType type = (ClassType) symbols.getClass(cd.i);
       symbols = symbols.enterClassScope(cd.i.s);
@@ -45,7 +49,7 @@ public class DeclarationVisitor extends AbstractVisitor {
 
   public void visit(MainClass n) {
     try {
-      symbols.putClass(n.i1, new ClassType(n.i1.s));
+      symbols.putClass(n.i1, new ClassType(n.i1.s, false));
     } catch (SymbolException e) {
       n.error = true;
     }
@@ -66,7 +70,7 @@ public class DeclarationVisitor extends AbstractVisitor {
   public void visit(ClassDeclExtends n) {
     // this cannot fail because toposort guarantees base is already declared
     ClassType base = (ClassType) symbols.getClass(n.j);
-    visit(n, new ClassType(n.i.s, false, base));
+    visit(n, new ClassType(n.i.s, base));
   }
 
   public void visit(MethodDecl n) {
@@ -75,11 +79,7 @@ public class DeclarationVisitor extends AbstractVisitor {
       symbols = symbols.enterMethodScope(n.i.s);
       n.fl.stream().forEach(f -> f.accept(this));
       n.vl.stream().forEach(vd -> vd.accept(this));
-      IntStream.range(0, n.sl.size()).filter(i -> n.sl.get(i) instanceof TryCatch).forEach(i -> {
-        TryCatch t = (TryCatch) n.sl.get(i);
-        t.index = i;
-        t.accept(this);
-      });
+      n.sl.stream().forEach(s -> s.accept(this));
       symbols = symbols.exitScope();
     } catch (SymbolException e) {
       n.error = true;
@@ -102,13 +102,48 @@ public class DeclarationVisitor extends AbstractVisitor {
     }
   }
 
-  public void visit(TryCatch n) {
+  public void visit(Try n) {
+    n.c.stream().forEach(c -> c.accept(this));
+  }
+
+  public void visit(Catch n) {
+    symbols.putCatch(n);
+    symbols = symbols.enterCatchScope(n);
     try {
-      symbols.putCatch(n.f.i, varDeclToType(n.f.t));
+      Type t = varDeclToType(n.f.t);
+      if (t != BaseType.UNKNOWN) {
+        if (!(t instanceof ClassType)) {
+          Error.errorUnexpectedType(n.f.t.line_number, t);
+          t = BaseType.UNKNOWN;
+        } else if (!((ClassType) t).throwable) {
+          Error.errorNotThrowable(n.f.t.line_number, t);
+          t = BaseType.UNKNOWN;
+        }
+      }
+      symbols.putVariable(n.f.i, t);
     } catch (SymbolException e) {
       n.error = true;
     }
+    symbols = symbols.exitScope();
   }
+
+  public void visit(Block n) {
+    n.sl.stream().forEach(s -> s.accept(this));
+  }
+
+  public void visit(If n) {
+    n.s1.accept(this);
+    n.s2.accept(this);
+  }
+
+  public void visit(While n) {
+    n.s.accept(this);
+  }
+
+  public void visit(Throw n) {}
+  public void visit(Print n) {}
+  public void visit(Assign n) {}
+  public void visit(ArrayAssign n) {}
 
   private List<ClassDecl> toposort(ClassDeclList cl) {
     Map<String, ClassDecl> classes = new HashMap<>();
@@ -188,11 +223,7 @@ public class DeclarationVisitor extends AbstractVisitor {
     } else if (t instanceof IntArrayType) {
       return BaseType.ARRAY;
     } else if (t instanceof IdentifierType) {
-      IdentifierType ti = (IdentifierType) t;
-      if ("RuntimeException".equals(ti.s)) {
-        return BaseType.RUNTIME_EXCEPTION;
-      }
-      return symbols.getClass(ti.s, t.line_number);
+      return symbols.getClass(((IdentifierType) t).s, t.line_number);
     } else {
       // this would be compiler internal bug
       throw new IllegalArgumentException();

@@ -3,15 +3,14 @@ package AST;
 import AST.Visitor.Visitor;
 import java_cup.runtime.ComplexSymbolFactory.Location;
 
-public class TryCatch extends Statement {
-  public StatementList s1,s2;
+public class Catch extends ASTNode {
   public Formal f;
-  public int index;
+  public StatementList s;
   public boolean error = false;
 
-  public TryCatch(StatementList as1, Formal af, StatementList as2, Location pos) {
+  public Catch(Formal af, StatementList as, Location pos) {
     super(pos);
-    s1=as1; s2=as2;
+    s = as;
     f = af;
   }
 
@@ -19,4 +18,3 @@ public class TryCatch extends Statement {
     v.visit(this);
   }
 }
-

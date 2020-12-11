@@ -212,27 +212,31 @@ public class PrettyPrintVisitor implements Visitor {
     inc_indent_level();
   }
 
-  public void visit(TryCatch n) {
+  public void visit(Try n) {
     indent();
     System.out.println("try {");
     inc_indent_level();
-    n.s1.stream().forEach(s -> {
+    n.s.stream().forEach(s -> {
       s.accept(this);
       System.out.println();
     });
     dec_indent_level();
+    n.c.stream().forEach(c -> c.accept(this));
+    indent();
+    System.out.println("}");
+  }
+
+  public void visit(Catch n) {
     indent();
     System.out.print("} catch (");
     n.f.accept(this);
     System.out.println(") {");
     inc_indent_level();
-    n.s2.stream().forEach(s -> {
+    n.s.stream().forEach(s -> {
       s.accept(this);
       System.out.println();
     });
     dec_indent_level();
-    indent();
-    System.out.println("}");
   }
 
   // Exp e;
@@ -279,7 +283,7 @@ public class PrettyPrintVisitor implements Visitor {
     n.s.accept(this);
     dec_indent_level();
   }
-  
+
   public void visit(Throw n) {
     indent();
     System.out.print("throw ");

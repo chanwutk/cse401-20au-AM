@@ -14,13 +14,14 @@ class C1 extends C2 {
 	}
 }
 
-class C2 {
+class C2 extends RuntimeException {
 	C1 x;
 	public int f(int i) {
 		C2 y;
 		try {
 			y = x;
-		} catch (RuntimeException e) {}
+		} catch (C2 e) {
+		} catch (C1 e) {}
 		return x.f(i);
 	}
 }

@@ -67,7 +67,8 @@ public class SingleLineTestVisitor implements Visitor {
   public void visit(IdentifierType n) {singleline = false;}
   public void visit(Block n) {singleline = false;}
   public void visit(If n) {singleline = false;}
-  public void visit(TryCatch n) {singleline = false;}
+  public void visit(Try n) {singleline = false;}
+  public void visit(Catch n) {singleline = false;}
   public void visit(While n) {singleline = false;}
   public void visit(Throw n) {singleline = false;}
   public void visit(Print n) {singleline = false;}
