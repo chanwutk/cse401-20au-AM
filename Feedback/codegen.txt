@@ -1,0 +1,9 @@
+CSE 401/M501 Project IV - Code Generation
+
+Multiple method calls in a statement are not always evaluated left-to-right or arithmetic order-of-operations is not correct. Running code such as ‘this.m() + this.m() * this.m() - this.m()’ (where this.m() can return different values) results in output that differs from compiling the same program with javac. (-2)
+
+The generated assembly segfaults when assigning to an array index that is out-of-bounds (specifically, out-of-bounds by one byte). (-2)
+
+The compiler passes all exception tests. Great job on the extension part of the project! (+0)
+
+Total: 76/80
